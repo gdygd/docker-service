@@ -47,3 +47,28 @@ func (server *Server) dockerPs(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, containers)
 }
+
+type getInspectRequest struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+func (server *Server) dockerInspect(ctx *gin.Context) {
+	var req getInspectRequest
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	inspect, err := server.service.InspectContainer(ctx, req.ID)
+	if err != nil {
+		logger.Log.Error("Service Inspect container error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	logger.Log.Print(2, "ID: %s", inspect.ID)
+	logger.Log.Print(2, "Image: %s", inspect.Image)
+	logger.Log.Print(2, "Name: %s", inspect.Name)
+
+	ctx.JSON(http.StatusOK, inspect)
+}

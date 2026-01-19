@@ -130,7 +130,7 @@ func main() {
 	process_mode := flag.String("mode", "debug", "프로세스 실행 모드를 선택")
 	flag.Parse()
 	logger.Log.Print(2, "process mode : %s", *process_mode)
-	logger.Log.Print(2, "남은 인자들:", flag.Args())
+	logger.Log.Print(2, "남은 인자들:[%v]", flag.Args())
 
 	ok := initEnv()
 	defer clearEnv()

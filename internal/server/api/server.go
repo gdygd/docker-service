@@ -76,6 +76,7 @@ func (server *Server) setupRouter() {
 	router.GET("/terminate", server.terminate)
 
 	router.GET("/ps", server.dockerPs)
+	router.GET("/inspect/:id", server.dockerInspect)
 	// build
 	// push
 	// run
