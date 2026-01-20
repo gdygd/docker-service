@@ -57,6 +57,14 @@ remove
 ContainerRemove()
 */
 
+func (c *Client) StartContainer(ctx context.Context, id string) (client.ContainerStartResult, error) {
+	return c.cli.ContainerStart(ctx, id, client.ContainerStartOptions{})
+}
+
+func (c *Client) StopContainer(ctx context.Context, id string) (client.ContainerStopResult, error) {
+	return c.cli.ContainerStop(ctx, id, client.ContainerStopOptions{})
+}
+
 // container resource monitoring
 /*
 CPU 사용률
@@ -65,6 +73,9 @@ Network Rx / Tx
 Block IO
 */
 // ContainerStats()
+func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (client.ContainerStatsResult, error) {
+	return c.cli.ContainerStats(ctx, id, client.ContainerStatsOptions{Stream: stream})
+}
 
 // log
 // ContainerLogs()

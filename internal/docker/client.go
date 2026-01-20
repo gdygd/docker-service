@@ -12,11 +12,11 @@ import (
 type DockerAPI interface {
 	ListContainers(ctx context.Context) ([]Container, error)
 	InspectContainer(ctx context.Context, containerID string) (client.ContainerInspectResult, error)
-	StartContainer(ctx context.Context, id string) error
-	StopContainer(ctx context.Context, id string) error
+	StartContainer(ctx context.Context, id string) (client.ContainerStartResult, error)
+	StopContainer(ctx context.Context, id string) (client.ContainerStopResult, error)
 	ContainerPause(ctx context.Context, id string) error
 	ContainerRemove(ctx context.Context, id string) error
-	ContainerStats(ctx context.Context) error
+	ContainerStats(ctx context.Context, id string, stream bool) (client.ContainerStatsResult, error)
 }
 
 type Client struct {

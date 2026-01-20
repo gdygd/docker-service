@@ -76,7 +76,10 @@ func (server *Server) setupRouter() {
 	router.GET("/terminate", server.terminate)
 
 	router.GET("/ps", server.dockerPs)
-	router.GET("/inspect/:id", server.dockerInspect)
+	router.GET("/inspect/:id", server.containerInspect)
+	router.GET("/start/:id", server.startContainer)
+	router.GET("/stop/:id", server.stopContainer)
+	router.GET("/stat/:id", server.statContainer)
 	// build
 	// push
 	// run

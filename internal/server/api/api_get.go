@@ -48,12 +48,12 @@ func (server *Server) dockerPs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, containers)
 }
 
-type getInspectRequest struct {
+type requestContainerID struct {
 	ID string `uri:"id" binding:"required"`
 }
 
-func (server *Server) dockerInspect(ctx *gin.Context) {
-	var req getInspectRequest
+func (server *Server) containerInspect(ctx *gin.Context) {
+	var req requestContainerID
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
@@ -71,4 +71,62 @@ func (server *Server) dockerInspect(ctx *gin.Context) {
 	logger.Log.Print(2, "Name: %s", inspect.Name)
 
 	ctx.JSON(http.StatusOK, inspect)
+}
+
+func (server *Server) startContainer(ctx *gin.Context) {
+	var req requestContainerID
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	err := server.service.StartContainer(ctx, req.ID)
+	if err != nil {
+		logger.Log.Error("Service startContainer error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "")
+}
+
+func (server *Server) stopContainer(ctx *gin.Context) {
+	var req requestContainerID
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	err := server.service.StopContainer(ctx, req.ID)
+	if err != nil {
+		logger.Log.Error("Service stopContainer error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, "")
+}
+
+func (server *Server) statContainer(ctx *gin.Context) {
+	var req requestContainerID
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	rst, err := server.service.ContainerStats(ctx, req.ID, false)
+	if err != nil {
+		logger.Log.Error("Service statContainer error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	logger.Log.Print(2, "cpu : %.2f", rst.CPUPercent)
+	logger.Log.Print(2, "memU : %f %s", rst.MemoryUsageVal, rst.MemoryUsageUnit)
+	logger.Log.Print(2, "memL : %f %s", rst.MemoryLimitVal, rst.MemoryLimitUnit)
+	logger.Log.Print(2, "memP : %.2f", rst.MemoryPercent)
+	logger.Log.Print(2, "rx : %d", rst.NetworkRx)
+	logger.Log.Print(2, "tx : %d", rst.NetworkTx)
+
+	ctx.JSON(http.StatusOK, "")
 }

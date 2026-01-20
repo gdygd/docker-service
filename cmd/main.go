@@ -159,7 +159,7 @@ func main() {
 		}
 
 		if terminate {
-			logger.Log.Print(2, "Quit delivery-service .. ")
+			logger.Log.Print(2, "Quit docker container-service .. ")
 			break
 		}
 
