@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"time"
 
 	"docker_service/internal/db"
 	"docker_service/internal/docker"
@@ -123,6 +124,35 @@ func (s *ApiService) ContainerStats(ctx context.Context, id string, stream bool)
 
 	stats := calculateStats(second)
 	return stats, nil
+}
+
+func (s *ApiService) ContainerStatsStream(ctx context.Context, id string, stream bool, ch_rst chan *docker.ContainerStats) error {
+	result, err := s.docker.ContainerStats(ctx, id, stream)
+	if err != nil {
+		logger.Log.Error("Get ContainerStatsStream error.. (%v)", err)
+		return err
+	}
+	defer result.Body.Close()
+	decoder := json.NewDecoder(result.Body)
+
+	for {
+		select {
+		case <-ctx.Done():
+			logger.Log.Print(2, "Stop ContainerStatsStream..")
+			return nil
+		default:
+			var statsRaw docker.ContainerStatsRaw
+			if err := decoder.Decode(&statsRaw); err != nil {
+				logger.Log.Error("ContainerStats raw data decode error #1.. (%v)", err)
+				return err
+			}
+
+			stats := calculateStats(statsRaw)
+			ch_rst <- stats
+
+			time.Sleep(time.Second * 1)
+		}
+	}
 }
 
 func calculateStats(raw docker.ContainerStatsRaw) *docker.ContainerStats {

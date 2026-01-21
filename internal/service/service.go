@@ -13,4 +13,5 @@ type ServiceInterface interface {
 	StartContainer(ctx context.Context, id string) error
 	StopContainer(ctx context.Context, id string) error
 	ContainerStats(ctx context.Context, id string, stream bool) (*docker.ContainerStats, error)
+	ContainerStatsStream(ctx context.Context, id string, stream bool, ch_rst chan *docker.ContainerStats) error
 }

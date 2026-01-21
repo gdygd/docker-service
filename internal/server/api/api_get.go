@@ -48,10 +48,6 @@ func (server *Server) dockerPs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, containers)
 }
 
-type requestContainerID struct {
-	ID string `uri:"id" binding:"required"`
-}
-
 func (server *Server) containerInspect(ctx *gin.Context) {
 	var req requestContainerID
 	if err := ctx.ShouldBindUri(&req); err != nil {

@@ -60,6 +60,9 @@ type ContainerStatsRaw struct {
 }
 
 type ContainerStats struct {
+	ID   string
+	Name string
+
 	CPUPercent  float64
 	MemoryUsage uint64 // byte
 	MemoryLimit uint64 // byte
