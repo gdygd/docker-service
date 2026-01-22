@@ -5,3 +5,16 @@ docker run -d \
   --name docker-service \
   -p 9083:9083 \
   docker-service:latest
+
+
+*private registry push & pull
+docker tag docker-service:latest theroad-ygd.com:5000/docker-service:latest
+
+docker push theroad-ygd.com:5000/docker-service:latest
+
+docker pull theroad-ygd.com:5000/docker-service:latest
+
+docker run -d \
+  --name docker-service \
+  -p 9083:9083 \
+  theroad-ygd.com:5000/docker-service:latest
