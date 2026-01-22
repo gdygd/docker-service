@@ -1,0 +1,9 @@
+sudo systemctl edit docker
+
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd
+
+
+ctrl + O : save
+ctrl + x : 나가기

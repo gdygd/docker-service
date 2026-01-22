@@ -1,0 +1,7 @@
+docker build -t docker-service:latest .
+
+
+docker run -d \
+  --name docker-service \
+  -p 9083:9083 \
+  docker-service:latest

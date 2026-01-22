@@ -12,10 +12,11 @@ import (
 )
 
 type Container struct {
-	Config *config.Config
-	DbHnd  db.DbHandler
-	ObjDb  *memory.RedisDb
-	Docker *docker.Client
+	Config    *config.Config
+	DbHnd     db.DbHandler
+	ObjDb     *memory.RedisDb
+	Docker    *docker.Client
+	DockerMng *docker.DockerClientManager
 }
 
 var container *Container
@@ -43,6 +44,20 @@ func NewContainer() (*Container, error) {
 		logger.Log.Error("init docker client error..(%v)", err)
 	}
 	container.Docker = dcCli
+
+	// set docker daemon cert path
+	docker.SetCertpaht(config.CERT_PATH)
+
+	// init docker client Manager
+	dockerMng, err := docker.NewDockerClientManager([]docker.HostConfig{
+		// {Name: "local", Addr: "unix"},
+		{Name: "localhost", Addr: "tcp://10.1.0.119:2376"},
+		// {Name: "localhost", Addr: "tcp://10.1.0.119:2375"}, // ssh tunnel 로연결
+	})
+	if err != nil {
+		logger.Log.Error("init docker client error..(%v)", err)
+	}
+	container.DockerMng = dockerMng
 
 	return container, nil
 }

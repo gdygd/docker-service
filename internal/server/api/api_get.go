@@ -48,6 +48,33 @@ func (server *Server) dockerPs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, containers)
 }
 
+type requestHostName struct {
+	Host string `uri:"host" binding:"required"`
+}
+
+func (server *Server) dockerPs2(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, "")
+
+	var req requestHostName
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	containers, err := server.service.ContainerList2(ctx, req.Host)
+	if err != nil {
+		logger.Log.Error("Service Container list error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	for i, c := range containers {
+		logger.Log.Print(2, "list#2 [%d], (%v)", i, c)
+	}
+
+	ctx.JSON(http.StatusOK, containers)
+}
+
 func (server *Server) containerInspect(ctx *gin.Context) {
 	var req requestContainerID
 	if err := ctx.ShouldBindUri(&req); err != nil {

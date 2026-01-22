@@ -24,12 +24,14 @@ const (
 type ApiService struct {
 	dbHnd  db.DbHandler
 	docker *docker.Client
+	docMng *docker.DockerClientManager
 }
 
-func NewApiService(dbHnd db.DbHandler, docker *docker.Client) service.ServiceInterface {
+func NewApiService(dbHnd db.DbHandler, docker *docker.Client, dockerMng *docker.DockerClientManager) service.ServiceInterface {
 	return &ApiService{
 		dbHnd:  dbHnd,
 		docker: docker,
+		docMng: dockerMng,
 	}
 }
 
@@ -39,6 +41,15 @@ func (s *ApiService) Test() {
 
 func (s *ApiService) ContainerList(ctx context.Context) ([]docker.Container, error) {
 	return s.docker.ListContainers(ctx)
+}
+
+func (s *ApiService) ContainerList2(ctx context.Context, host string) ([]docker.Container, error) {
+	client, err := s.docMng.Get(host)
+	if err != nil {
+		logger.Log.Error("[ContainerList2] Get host client error..(%v)", err)
+	}
+
+	return client.ListContainers(ctx)
 }
 
 func (s *ApiService) InspectContainer(ctx context.Context, containerID string) (docker.ContainerInspect, error) {
@@ -229,7 +240,6 @@ func calculateMemoryUsage(raw docker.ContainerStatsRaw) uint64 {
 	usage := raw.MemoryStats.Usage
 
 	cgroup := detectCgroupVersion()
-	logger.Log.Print(2, "cgroup : %d", cgroup)
 
 	if cgroup == 2 {
 		return usage - raw.MemoryStats.Stats.Cache

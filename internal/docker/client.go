@@ -19,8 +19,11 @@ type DockerAPI interface {
 	ContainerStats(ctx context.Context, id string, stream bool) (client.ContainerStatsResult, error)
 }
 
+// Docker Host
 type Client struct {
-	cli *client.Client
+	cli  *client.Client
+	addr string
+	name string // host name
 }
 
 func New() (*Client, error) {
@@ -36,4 +39,16 @@ func New() (*Client, error) {
 
 func (c *Client) Close() error {
 	return c.cli.Close()
+}
+
+func (c *Client) Addr() string {
+	return c.addr
+}
+
+func (c *Client) Name() string {
+	return c.name
+}
+
+func (c *Client) Raw() *client.Client {
+	return c.cli
 }

@@ -46,7 +46,7 @@ type Server struct {
 
 func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bool) (*Server, error) {
 	// init service
-	apiservice := apiserv.NewApiService(ct.DbHnd, ct.Docker)
+	apiservice := apiserv.NewApiService(ct.DbHnd, ct.Docker, ct.DockerMng)
 	tokenMaker, err := token.NewJWTMaker(ct.Config.TokenSecretKey)
 	if err != nil {
 		return nil, fmt.Errorf("cannot create token maker:%w", err)
@@ -88,6 +88,8 @@ func (server *Server) setupRouter() {
 	router.GET("/terminate", server.terminate)
 
 	router.GET("/ps", server.dockerPs)
+	router.GET("/ps2/:host", server.dockerPs2)
+
 	router.GET("/inspect/:id", server.containerInspect)
 	router.GET("/start/:id", server.startContainer)
 	router.GET("/stop/:id", server.stopContainer)
@@ -171,7 +173,6 @@ func (server *Server) updateContainerStats() {
 			}
 
 			cancel()
-			// close(ch_res)
 
 			var res []docker.ContainerStats
 			for r := range ch_res {
@@ -179,7 +180,7 @@ func (server *Server) updateContainerStats() {
 			}
 
 			for _, r := range res {
-				logger.Log.Print(2, "res : %v", r)
+				logger.Log.Print(1, "res : %v", r)
 			}
 
 			encoding, err := json.Marshal(res)
@@ -253,7 +254,7 @@ func (server *Server) updateContainerStats() {
 func (server *Server) Start() error {
 	logger.Log.Print(2, "Gin server start.")
 
-	go server.hub.Run()
+	go server.hub.Run() // web socket hub
 	go server.updateContainerStats()
 
 	if err := server.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {

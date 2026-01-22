@@ -23,6 +23,8 @@ type Config struct {
 
 	PROCESS_INTERVAL time.Duration `mapstructure:"PROCESS_INTERVAL"`
 	DebugLv          int           `mapstructure:"DEBUG_LV"`
+
+	CERT_PATH string `mapstructure:"CERT_PATH"`
 }
 
 func LoadConfig(path string) (Config, error) {
@@ -41,5 +43,4 @@ func LoadConfig(path string) (Config, error) {
 
 	err = viper.Unmarshal(&config)
 	return config, nil
-
 }

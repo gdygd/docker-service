@@ -1,0 +1,80 @@
+*CA인증서
+openssl genrsa -out ca-key.pem 4096
+openssl req -new -x509 -days 3650 -key ca-key.pem -sha256 -out ca.pem
+
+
+
+*서버인증서
+openssl genrsa -out server-key.pem 4096
+openssl req -new -key server-key.pem -out server.csr
+
+cat > extfile.cnf <<EOF
+subjectAltName = IP:10.1.0.119,IP:127.0.0.1
+EOF
+
+*서버 인증서 서명
+openssl x509 -req -days 3650 -sha256 \
+  -in server.csr \
+  -CA ca.pem -CAkey ca-key.pem -CAcreateserial \
+  -out server-cert.pem \
+  -extfile extfile.cnf
+
+
+
+*클라이언트 인증서
+openssl genrsa -out key.pem 4096
+openssl req -subj "/CN=docker-client" -new -key key.pem -out client.csr
+
+openssl x509 -req -days 3650 -sha256 \
+  -in client.csr \
+  -CA ca.pem -CAkey ca-key.pem -CAcreateserial \
+  -out cert.pem
+
+
+sudo mkdir -p /etc/docker/certs
+sudo cp ca.pem server-cert.pem server-key.pem /etc/docker/certs
+
+sudo chmod 600 /etc/docker/certs/*.pem
+sudo chown root:root /etc/docker/certs/*.pem
+
+
+
+*도커데몬 tls설정
+sudo vi /etc/docker/daemon.json
+
+{
+  "tls": true,
+  "tlsverify": true,
+  "tlscacert": "/etc/docker/certs/ca.pem",
+  "tlscert": "/etc/docker/certs/server-cert.pem",
+  "tlskey": "/etc/docker/certs/server-key.pem",
+  "hosts": [
+    "unix:///var/run/docker.sock",
+    "tcp://10.1.0.119:2376"
+  ]
+}
+
+*host 옵셥을 넣으려면 아래 명령을 통해 override를 해야함.
+sudo systemctl edit docker
+
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd
+
+
+재시작
+sudo systemctl daemon-reload
+sudo systemctl restart docker
+sudo systemctl status docker
+
+
+tls동작 검증
+docker \
+  --tlsverify \
+  --tlscacert=ca.pem \
+  --tlscert=cert.pem \
+  --tlskey=key.pem \
+  -H tcp://10.1.0.119:2376 info
+
+
+  
