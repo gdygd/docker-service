@@ -30,8 +30,8 @@ type ApiService struct {
 func NewApiService(dbHnd db.DbHandler, docker *docker.Client, dockerMng *docker.DockerClientManager) service.ServiceInterface {
 	return &ApiService{
 		dbHnd:  dbHnd,
-		docker: docker,
-		docMng: dockerMng,
+		docker: docker,    // none tls client	(only local host)
+		docMng: dockerMng, // tls client	(for remote and local host)
 	}
 }
 
@@ -56,6 +56,29 @@ func (s *ApiService) InspectContainer(ctx context.Context, containerID string) (
 	res, err := s.docker.InspectContainer(ctx, containerID)
 	if err != nil {
 		logger.Log.Error("inspect container error.. .%v", err)
+		return docker.ContainerInspect{}, err
+	}
+
+	logger.Log.Print(2, "ID: %s", res.Container.ID)
+	logger.Log.Print(2, "Image : %s", res.Container.Image)
+	logger.Log.Print(2, "Name: %s", res.Container.Name)
+
+	return docker.ContainerInspect{
+		ID:    res.Container.ID,
+		Image: res.Container.Image,
+		Name:  res.Container.Name,
+	}, nil
+}
+
+func (s *ApiService) InspectContainer2(ctx context.Context, containerID, host string) (docker.ContainerInspect, error) {
+	client, err := s.docMng.Get(host)
+	if err != nil {
+		logger.Log.Error("[InspectContainer2] Get host client error..(%v)", err)
+	}
+
+	res, err := client.InspectContainer(ctx, containerID)
+	if err != nil {
+		logger.Log.Error("InspectContainer2 error.. .%v", err)
 		return docker.ContainerInspect{}, err
 	}
 

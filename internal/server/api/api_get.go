@@ -96,6 +96,32 @@ func (server *Server) containerInspect(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, inspect)
 }
 
+type requestHost_ID struct {
+	Host string `uri:"host" binding:"required"`
+	Id   string `uri:"id" binding:"required"`
+}
+
+func (server *Server) containerInspect2(ctx *gin.Context) {
+	var req requestHost_ID
+	if err := ctx.ShouldBindUri(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	inspect, err := server.service.InspectContainer2(ctx, req.Id, req.Host)
+	if err != nil {
+		logger.Log.Error("Service Inspect container error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	logger.Log.Print(2, "ID: %s", inspect.ID)
+	logger.Log.Print(2, "Image: %s", inspect.Image)
+	logger.Log.Print(2, "Name: %s", inspect.Name)
+
+	ctx.JSON(http.StatusOK, inspect)
+}
+
 func (server *Server) startContainer(ctx *gin.Context) {
 	var req requestContainerID
 	if err := ctx.ShouldBindUri(&req); err != nil {

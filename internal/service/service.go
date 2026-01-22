@@ -11,6 +11,7 @@ type ServiceInterface interface {
 	ContainerList(ctx context.Context) ([]docker.Container, error)
 	ContainerList2(ctx context.Context, host string) ([]docker.Container, error)
 	InspectContainer(ctx context.Context, containerID string) (docker.ContainerInspect, error)
+	InspectContainer2(ctx context.Context, containerID, host string) (docker.ContainerInspect, error)
 	StartContainer(ctx context.Context, id string) error
 	StopContainer(ctx context.Context, id string) error
 	ContainerStats(ctx context.Context, id string, stream bool) (*docker.ContainerStats, error)

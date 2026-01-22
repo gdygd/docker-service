@@ -23,10 +23,12 @@ FROM alpine:3.19
 WORKDIR /app
 
 RUN mkdir -p /app/log
+RUN mkdir -p /certs
 
 COPY --from=builder /app/app .
 
 COPY cmd/app.env ./app.env
+COPY certs/ /certs/
 
 EXPOSE 9083
 

@@ -87,13 +87,18 @@ func (server *Server) setupRouter() {
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
 
-	router.GET("/ps", server.dockerPs)
-	router.GET("/ps2/:host", server.dockerPs2)
+	router.GET("/ps", server.dockerPs) // none tls
 
-	router.GET("/inspect/:id", server.containerInspect)
-	router.GET("/start/:id", server.startContainer)
-	router.GET("/stop/:id", server.stopContainer)
-	router.GET("/stat/:id", server.statContainer)
+	router.GET("/inspect/:id", server.containerInspect) // none tls
+	router.GET("/start/:id", server.startContainer)     // none tls
+	router.GET("/stop/:id", server.stopContainer)       // none tls
+	router.GET("/stat/:id", server.statContainer)       // none tls
+
+	router.GET("/ps2/:host", server.dockerPs2) // tls api
+	router.GET("/inspect2/:host/:id", server.containerInspect2)
+	router.GET("/start2/:id", server.startContainer)
+	router.GET("/stop2/:id", server.stopContainer)
+	router.GET("/stat2/:id", server.statContainer)
 
 	router.GET("/ws", server.wsHandler)
 
@@ -255,7 +260,7 @@ func (server *Server) Start() error {
 	logger.Log.Print(2, "Gin server start.")
 
 	go server.hub.Run() // web socket hub
-	go server.updateContainerStats()
+	// go server.updateContainerStats()
 
 	if err := server.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		logger.Log.Error("listen error. %v", err)
