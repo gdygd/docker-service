@@ -1,0 +1,40 @@
+name: docker build & private registry push/pull
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  docker-ci:
+    runs-on: [self-hosted, docker]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # 1️⃣ Docker login
+      - name: Docker login to private registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | \
+          docker login https://${{ secrets.REGISTRY_URL }} \
+            --username ${{ secrets.REGISTRY_USER }} \
+            --password-stdin
+
+      # 2️⃣ Docker build
+      - name: Docker build
+        run: |
+          docker build \
+            -t docker-service:latest \
+            -t ${{ secrets.REGISTRY_URL }}/docker-service:latest \
+            .
+
+      # 3️⃣ Docker push
+      - name: Docker push
+        run: |
+          docker push ${{ secrets.REGISTRY_URL }}/docker-service:latest
+
+      # 4️⃣ (검증) pull 테스트
+      - name: Docker pull verify
+        run: |
+          docker rmi ${{ secrets.REGISTRY_URL }}/docker-service:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/docker-service:latest

@@ -1,0 +1,9 @@
+HTTPS 인증서 자체 서명일 경우
+/etc/docker/daemon.json
+
+{
+  "insecure-registries": ["theroad-ygd.com:5000"]
+}
+
+
+위 항목 추가
