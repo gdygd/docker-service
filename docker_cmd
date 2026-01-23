@@ -6,6 +6,10 @@ docker run -d \
   -p 9083:9083 \
   docker-service:latest
 
+docker run \
+  -v /host/certs:/certs \
+  docker-service:latest
+  
 
 *private registry push & pull
 docker tag docker-service:latest theroad-ygd.com:5000/docker-service:latest
