@@ -7,9 +7,10 @@ docker run -d \
   docker-service:latest
 
 docker run \
-  -v /host/certs:/certs \
+  -p 9083:9083 \
+  -v /home/gildong/work/go/src/docker_mng/docker_service/certs:/certs \
   docker-service:latest
-  
+
 
 *private registry push & pull
 docker tag docker-service:latest theroad-ygd.com:5000/docker-service:latest
