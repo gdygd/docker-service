@@ -90,15 +90,15 @@ func (server *Server) setupRouter() {
 	router.GET("/ps", server.dockerPs) // none tls
 
 	router.GET("/inspect/:id", server.containerInspect) // none tls
-	router.GET("/start/:id", server.startContainer)     // none tls
-	router.GET("/stop/:id", server.stopContainer)       // none tls
+	router.POST("/start/:id", server.startContainer)    // none tls
+	router.POST("/stop/:id", server.stopContainer)      // none tls
 	router.GET("/stat/:id", server.statContainer)       // none tls
 
 	router.GET("/ps2/:host", server.dockerPs2) // tls api
 	router.GET("/inspect2/:host/:id", server.containerInspect2)
-	router.GET("/start2/:id", server.startContainer)
-	router.GET("/stop2/:id", server.stopContainer)
-	router.GET("/stat2/:id", server.statContainer)
+	router.POST("/start2", server.startContainer2)
+	router.POST("/stop2", server.stopContainer2)
+	router.GET("/stat2/:host/:id", server.statContainer2)
 
 	router.GET("/ws", server.wsHandler)
 

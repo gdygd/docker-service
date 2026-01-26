@@ -104,6 +104,22 @@ func (s *ApiService) StartContainer(ctx context.Context, id string) error {
 	return nil
 }
 
+func (s *ApiService) StartContainer2(ctx context.Context, id, host string) error {
+	client, err := s.docMng.Get(host)
+	if err != nil {
+		logger.Log.Error("[StartContainer2] Get host client error..(%v)", err)
+	}
+
+	rst, err := client.StartContainer(ctx, id)
+	if err != nil {
+		logger.Log.Error("StartContainer err .. %v", err)
+		return err
+	}
+
+	logger.Log.Print(2, "StartContainer rst : %v", rst)
+	return nil
+}
+
 func (s *ApiService) StopContainer(ctx context.Context, id string) error {
 	rst, err := s.docker.StopContainer(ctx, id)
 	if err != nil {
@@ -115,25 +131,57 @@ func (s *ApiService) StopContainer(ctx context.Context, id string) error {
 	return nil
 }
 
-// func (s *ApiService) ContainerStats(ctx context.Context, id string, stream bool) (*docker.ContainerStats, error) {
-// 	result, err := s.docker.ContainerStats(ctx, id, stream)
-// 	if err != nil {
-// 		logger.Log.Error("Get ContainerStats error.. (%v)", err)
-// 		return nil, err
-// 	}
-// 	defer result.Body.Close()
+func (s *ApiService) StopContainer2(ctx context.Context, id, host string) error {
+	client, err := s.docMng.Get(host)
+	if err != nil {
+		logger.Log.Error("[StopContainer2] Get host client error..(%v)", err)
+	}
 
-// 	var raw docker.ContainerStatsRaw
-// 	if err := json.NewDecoder(result.Body).Decode(&raw); err != nil {
-// 		logger.Log.Error("ContainerStats raw data decode error.. (%v)", err)
-// 		return nil, err
-// 	}
+	rst, err := client.StopContainer(ctx, id)
+	if err != nil {
+		logger.Log.Error("StopContainer err .. %v", err)
+		return err
+	}
 
-// 	return calculateStats(raw), nil
-// }
+	logger.Log.Print(2, "StopContainer rst : %v", rst)
+	return nil
+}
 
 func (s *ApiService) ContainerStats(ctx context.Context, id string, stream bool) (*docker.ContainerStats, error) {
 	result, err := s.docker.ContainerStats(ctx, id, true)
+	if err != nil {
+		logger.Log.Error("Get ContainerStats error.. (%v)", err)
+		return nil, err
+	}
+	defer result.Body.Close()
+
+	decoder := json.NewDecoder(result.Body)
+
+	// 첫 프레임 (버림)
+	var first docker.ContainerStatsRaw
+	if err := decoder.Decode(&first); err != nil {
+		logger.Log.Error("ContainerStats raw data decode error #1.. (%v)", err)
+		return nil, err
+	}
+
+	// 두 번째 프레임 (이걸로 계산)
+	var second docker.ContainerStatsRaw
+	if err := decoder.Decode(&second); err != nil {
+		logger.Log.Error("ContainerStats raw data decode error #2.. (%v)", err)
+		return nil, err
+	}
+
+	stats := calculateStats(second)
+	return stats, nil
+}
+
+func (s *ApiService) ContainerStats2(ctx context.Context, id, host string, stream bool) (*docker.ContainerStats, error) {
+	client, err := s.docMng.Get(host)
+	if err != nil {
+		logger.Log.Error("[StartContainer2] Get host client error..(%v)", err)
+	}
+
+	result, err := client.ContainerStats(ctx, id, true)
 	if err != nil {
 		logger.Log.Error("Get ContainerStats error.. (%v)", err)
 		return nil, err
