@@ -100,7 +100,7 @@ func (s *ApiService) StartContainer(ctx context.Context, id string) error {
 		return err
 	}
 
-	logger.Log.Print(2, "StartContainer rst : %v", rst)
+	logger.Log.Print(1, "StartContainer rst : %v", rst)
 	return nil
 }
 
@@ -116,7 +116,7 @@ func (s *ApiService) StartContainer2(ctx context.Context, id, host string) error
 		return err
 	}
 
-	logger.Log.Print(2, "StartContainer rst : %v", rst)
+	logger.Log.Print(1, "StartContainer rst : %v", rst)
 	return nil
 }
 
@@ -127,7 +127,7 @@ func (s *ApiService) StopContainer(ctx context.Context, id string) error {
 		return err
 	}
 
-	logger.Log.Print(2, "StopContainer rst : %v", rst)
+	logger.Log.Print(1, "StopContainer rst : %v", rst)
 	return nil
 }
 
@@ -143,7 +143,7 @@ func (s *ApiService) StopContainer2(ctx context.Context, id, host string) error 
 		return err
 	}
 
-	logger.Log.Print(2, "StopContainer rst : %v", rst)
+	logger.Log.Print(1, "StopContainer rst : %v", rst)
 	return nil
 }
 
@@ -235,6 +235,15 @@ func (s *ApiService) ContainerStatsStream(ctx context.Context, id string, stream
 			time.Sleep(time.Second * 1)
 		}
 	}
+}
+
+func (s *ApiService) EventStream(ctx context.Context, host string) {
+	client, err := s.docMng.Get(host)
+	if err != nil {
+		logger.Log.Error("[EventStream] Get host client error..(%v)", err)
+	}
+
+	client.EventStream(ctx)
 }
 
 func calculateStats(raw docker.ContainerStatsRaw) *docker.ContainerStats {

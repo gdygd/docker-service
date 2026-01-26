@@ -17,6 +17,8 @@ type DockerAPI interface {
 	ContainerPause(ctx context.Context, id string) error
 	ContainerRemove(ctx context.Context, id string) error
 	ContainerStats(ctx context.Context, id string, stream bool) (client.ContainerStatsResult, error)
+
+	EventStream(ctx context.Context) client.EventsResult
 }
 
 // Docker Host
@@ -34,6 +36,7 @@ func New() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &Client{cli: cli}, nil
 }
 

@@ -18,6 +18,7 @@ import (
 	"docker_service/internal/service"
 	apiserv "docker_service/internal/service/api"
 
+	"github.com/gdygd/goglib"
 	"github.com/gdygd/goglib/token"
 
 	"github.com/gin-gonic/gin"
@@ -101,6 +102,7 @@ func (server *Server) setupRouter() {
 	router.GET("/stat2/:host/:id", server.statContainer2)
 
 	router.GET("/ws", server.wsHandler)
+	router.GET("/events", gin.WrapF(handleSSE()))
 
 	// build
 	// push
@@ -116,6 +118,24 @@ func (server *Server) setupRouter() {
 	router.GET("/test", server.testapi)
 
 	server.router = router
+}
+
+func (server *Server) sseTest() {
+	for {
+		b, _ := json.Marshal(string("hello sse test~"))
+		var evdata goglib.EventData = goglib.EventData{}
+		evdata.Msgtype = "ssetest"
+		evdata.Data = string(b)
+		evdata.Id = "3"
+
+		goglib.SendSSE(evdata)
+		time.Sleep(time.Second * 1)
+	}
+}
+
+func (server *Server) containerEventStream() {
+	// ctx, _ := context.WithTimeout(server.ctx, 5*time.Second)
+	go server.service.EventStream(context.Background(), "localhost")
 }
 
 func (server *Server) updateContainerStats() {
@@ -261,6 +281,11 @@ func (server *Server) Start() error {
 
 	go server.hub.Run() // web socket hub
 	// go server.updateContainerStats()
+
+	go server.containerEventStream() // test
+
+	go ProcessEventMsg() // test
+	go server.sseTest()  // tests
 
 	if err := server.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		logger.Log.Error("listen error. %v", err)

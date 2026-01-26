@@ -3,6 +3,8 @@ package docker
 import (
 	"context"
 
+	"docker_service/internal/logger"
+
 	"github.com/moby/moby/client"
 )
 
@@ -88,3 +90,122 @@ func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (cl
 
 Auto-restart 트리거
 */
+
+// func (c *Client) EventStream(ctx context.Context) client.EventsResult {
+// 	stream := c.cli.Events(ctx, client.EventsListOptions{})
+
+// 	for {
+// 		select {
+// 		case msg, ok := <-stream.Messages:
+// 			if !ok {
+// 				logger.Log.Error("event channel closed ")
+// 			} else {
+// 				// logger.Log.Print(2, "event :%v", msg)
+// 				var evtmsg events.Message
+// 				evtmsg = msg
+
+// 				logger.Log.Print(2, "type : %s, action : %s, tm: %v", evtmsg.Type, evtmsg.Action, evtmsg.Time)
+// 				logger.Log.Print(2, "Actor:%v", evtmsg.Actor.ID)
+
+// 				keylist := []string{
+// 					"image", "name", "exitCode", "execDuration",
+// 				}
+// 				for k, v := range evtmsg.Actor.Attributes {
+// 					for _, kval := range keylist {
+// 						if k == kval {
+// 							logger.Log.Print(2, "(%v) [%v]", k, v)
+// 						}
+// 					}
+// 				}
+
+// 			}
+// 		case <-ctx.Done():
+// 			logger.Log.Print(2, "exit event stream..by ctx")
+// 			return client.EventsResult{}
+// 		}
+// 	}
+// }
+
+func (c *Client) EventStream(ctx context.Context) client.EventsResult {
+	// 이벤트 액션 맵 초기화
+	initEventAction()
+
+	stream := c.cli.Events(ctx, client.EventsListOptions{})
+
+	for {
+		select {
+		case msg, ok := <-stream.Messages:
+			if !ok {
+				logger.Log.Error("event channel closed")
+				return client.EventsResult{}
+			}
+
+			evt := msg
+			evtType := string(evt.Type)
+			evtAction := string(evt.Action)
+
+			// Type 필터
+			actions, ok := evtActionMap[evtType]
+			if !ok {
+				continue
+			}
+
+			// Action 필터
+			if !contains(actions, evtAction) {
+				continue
+			}
+
+			// 기본 이벤트 로그
+			logger.Log.Print(2, "[EVENT] type=%s action=%s time=%d id=%s", evtType, evtAction, evt.Time, evt.Actor.ID)
+
+			// 4️⃣ Attribute 화이트리스트 출력
+			for _, key := range evtAttribytes {
+				if v, ok := evt.Actor.Attributes[key]; ok {
+					logger.Log.Print(2, "  - %s = %s", key, v)
+				}
+			}
+
+		case <-ctx.Done():
+			logger.Log.Print(2, "exit event stream..by ctx")
+			return client.EventsResult{}
+		}
+	}
+}
+
+// func (c *Client) WatchContainerEvents(
+// 	ctx context.Context,
+// 	eventCh chan<- events.Message,
+// 	errCh chan<- error,
+// ) {
+// 	// container 이벤트만 필터링
+// 	args := filters.NewArgs()
+// 	args.Add("type", string(events.ContainerEventType))
+
+// 	// events API 호출
+// 	msgCh, errs := c.cli.Events(ctx, client.EventsListOptions{
+// 		Filters: args,
+// 	})
+
+// 	for {
+// 		select {
+// 		case msg, ok := <-msgCh:
+// 			if !ok {
+// 				errCh <- fmt.Errorf("events channel closed")
+// 				return
+// 			}
+// 			eventCh <- msg
+
+// 		case err, ok := <-errs:
+// 			if !ok {
+// 				return
+// 			}
+// 			if err != nil {
+// 				errCh <- err
+// 				return
+// 			}
+
+// 		case <-ctx.Done():
+// 			return
+// 		}
+// 	}
+// }
