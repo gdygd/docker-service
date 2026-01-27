@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"docker_service/internal/logger"
+	
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +30,19 @@ func (server *Server) terminate(ctx *gin.Context) {
 	server.ch_terminate <- true
 	logger.Log.Print(2, "Accept terminate command..")
 	ctx.JSON(http.StatusOK, nil)
+}
+
+func (server *Server) dockerHostList(ctx *gin.Context) {
+	hostconfigs, err := server.config.GetDockerHosts()
+
+	if err != nil {
+		logger.Log.Error("dockerHostList error.. [%v]", err)
+		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
+		return
+	}
+
+	response := ToContainerHostResponse(hostconfigs)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }
 
 func (server *Server) dockerPs(ctx *gin.Context) {

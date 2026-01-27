@@ -92,18 +92,19 @@ func (server *Server) setupRouter() {
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
 
-	router.GET("/ps", server.dockerPs) // none tls
+	router.GET("/hosts", server.dockerHostList) // docker host list info
+	router.GET("/ps", server.dockerPs) // none tls sdk api
 
-	router.GET("/inspect/:id", server.containerInspect) // none tls
-	router.POST("/start/:id", server.startContainer)    // none tls
-	router.POST("/stop/:id", server.stopContainer)      // none tls
-	router.GET("/stat/:id", server.statContainer)       // none tls
+	router.GET("/inspect/:id", server.containerInspect) // none tls sdk api
+	router.POST("/start/:id", server.startContainer)    // none tls sdk api
+	router.POST("/stop/:id", server.stopContainer)      // none tls sdk api
+	router.GET("/stat/:id", server.statContainer)       // none tls sdk api
 
-	router.GET("/ps2/:host", server.dockerPs2) // tls api
-	router.GET("/inspect2/:host/:id", server.containerInspect2)
-	router.POST("/start2", server.startContainer2)
-	router.POST("/stop2", server.stopContainer2)
-	router.GET("/stat2/:host/:id", server.statContainer2)
+	router.GET("/ps2/:host", server.dockerPs2) // apply tls sdk api
+	router.GET("/inspect2/:host/:id", server.containerInspect2) // apply tls sdk api
+	router.POST("/start2", server.startContainer2) // apply tls sdk api
+	router.POST("/stop2", server.stopContainer2)  // apply tls sdk api
+	router.GET("/stat2/:host/:id", server.statContainer2) // apply tls sdk api
 
 	router.GET("/ws", server.wsHandler)
 	router.GET("/events", gin.WrapF(handleSSE()))

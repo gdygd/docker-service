@@ -1,10 +1,17 @@
 package config
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/spf13/viper"
 )
+
+// DockerHostConfig는 Docker 호스트 설정
+type DockerHostConfig struct {
+	Name string `json:"name"`
+	Addr string `json:"addr"`
+}
 
 type Config struct {
 	Environment          string        `mapstructure:"ENVIRONMENT"`
@@ -24,7 +31,21 @@ type Config struct {
 	PROCESS_INTERVAL time.Duration `mapstructure:"PROCESS_INTERVAL"`
 	DebugLv          int           `mapstructure:"DEBUG_LV"`
 
-	CERT_PATH string `mapstructure:"CERT_PATH"`
+	CERT_PATH    string `mapstructure:"CERT_PATH"`
+	DOCKER_HOSTS string `mapstructure:"DOCKER_HOSTS"` // JSON format: [{"name":"host1","addr":"tcp://..."}]
+}
+
+// GetDockerHosts는 DOCKER_HOSTS JSON 문자열을 파싱하여 반환
+func (c *Config) GetDockerHosts() ([]DockerHostConfig, error) {
+	if c.DOCKER_HOSTS == "" {
+		return []DockerHostConfig{}, nil
+	}
+
+	var hosts []DockerHostConfig
+	if err := json.Unmarshal([]byte(c.DOCKER_HOSTS), &hosts); err != nil {
+		return nil, err
+	}
+	return hosts, nil
 }
 
 func LoadConfig(path string) (Config, error) {

@@ -3,7 +3,7 @@ package api
 import (
     "fmt"
     "math"
-
+	"docker_service/internal/config"
     "docker_service/internal/docker"
 )
 
@@ -37,6 +37,20 @@ func ErrorResponse(message string) APIResponse[any] {
         Success: false,
         Message: message,
     }
+}
+
+type DockerHostConfig struct {
+	Name string `json:"host"`
+	Addr string `json:"addr"`
+}
+
+func ToContainerHostResponse(hostinfos []config.DockerHostConfig) []DockerHostConfig {
+	var hosts []DockerHostConfig = []DockerHostConfig{}
+	for _, host := range hostinfos {
+		hosts = append(hosts, DockerHostConfig{Name: host.Name, Addr: host.Addr})
+	}
+	return hosts
+    
 }
 
 // ============================================================================

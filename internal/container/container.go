@@ -48,12 +48,22 @@ func NewContainer() (*Container, error) {
 	// set docker daemon cert path
 	docker.SetCertpaht(config.CERT_PATH)
 
-	// init docker client Manager
-	dockerMng, err := docker.NewDockerClientManager([]docker.HostConfig{
-		// {Name: "local", Addr: "unix"},
-		{Name: "119server", Addr: "tcp://10.1.0.119:2376"},
-		// {Name: "localhost", Addr: "tcp://10.1.0.119:2375"}, // ssh tunnel 로연결
-	})
+	// init docker client Manager (설정 파일에서 호스트 목록 로드)
+	hostConfigs, err := config.GetDockerHosts()
+	if err != nil {
+		logger.Log.Error("parse docker hosts config error..(%v)", err)
+	}
+
+	// config.DockerHostConfig -> docker.HostConfig 변환
+	dockerHosts := make([]docker.HostConfig, 0, len(hostConfigs))
+	for _, h := range hostConfigs {
+		dockerHosts = append(dockerHosts, docker.HostConfig{
+			Name: h.Name,
+			Addr: h.Addr,
+		})
+	}
+
+	dockerMng, err := docker.NewDockerClientManager(dockerHosts)
 	if err != nil {
 		logger.Log.Error("init docker client error..(%v)", err)
 	}
