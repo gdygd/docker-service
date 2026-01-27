@@ -51,7 +51,7 @@ func NewContainer() (*Container, error) {
 	// init docker client Manager
 	dockerMng, err := docker.NewDockerClientManager([]docker.HostConfig{
 		// {Name: "local", Addr: "unix"},
-		{Name: "localhost", Addr: "tcp://10.1.0.119:2376"},
+		{Name: "119server", Addr: "tcp://10.1.0.119:2376"},
 		// {Name: "localhost", Addr: "tcp://10.1.0.119:2375"}, // ssh tunnel 로연결
 	})
 	if err != nil {

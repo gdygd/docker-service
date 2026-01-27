@@ -74,17 +74,165 @@ func ToContainerListResponse(containers []docker.Container) []ContainerResponse 
 // ============================================================================
 
 type ContainerInspectResponse struct {
-    ID    string `json:"id"`
-    Name  string `json:"name"`
-    Image string `json:"image"`
+    // 기본 정보
+    ID           string `json:"id"`
+    Name         string `json:"name"`
+    Image        string `json:"image"`
+    Created      string `json:"created"`
+    Platform     string `json:"platform"`
+    RestartCount int    `json:"restart_count"`
+
+    // 상태 정보
+    State *StateResponse `json:"state,omitempty"`
+
+    // 설정 정보
+    Config *ConfigResponse `json:"config,omitempty"`
+
+    // 네트워크 정보
+    Network *NetworkResponse `json:"network,omitempty"`
+
+    // 마운트 정보
+    Mounts []MountResponse `json:"mounts,omitempty"`
+}
+
+type StateResponse struct {
+    Status     string `json:"status"`
+    Running    bool   `json:"running"`
+    Paused     bool   `json:"paused"`
+    Restarting bool   `json:"restarting"`
+    ExitCode   int    `json:"exit_code"`
+    StartedAt  string `json:"started_at,omitempty"`
+    FinishedAt string `json:"finished_at,omitempty"`
+}
+
+type ConfigResponse struct {
+    Hostname   string            `json:"hostname,omitempty"`
+    User       string            `json:"user,omitempty"`
+    Env        []string          `json:"env,omitempty"`
+    Cmd        []string          `json:"cmd,omitempty"`
+    Entrypoint []string          `json:"entrypoint,omitempty"`
+    WorkingDir string            `json:"working_dir,omitempty"`
+    Labels     map[string]string `json:"labels,omitempty"`
+}
+
+type NetworkResponse struct {
+    IPAddress  string                   `json:"ip_address"`
+    Gateway    string                   `json:"gateway"`
+    MacAddress string                   `json:"mac_address"`
+    Ports      map[string][]PortResponse `json:"ports,omitempty"`
+    Networks   map[string]NetworkEndpointResponse `json:"networks,omitempty"`
+}
+
+type PortResponse struct {
+    HostIP   string `json:"host_ip"`
+    HostPort string `json:"host_port"`
+}
+
+type NetworkEndpointResponse struct {
+    NetworkID  string `json:"network_id"`
+    IPAddress  string `json:"ip_address"`
+    Gateway    string `json:"gateway"`
+    MacAddress string `json:"mac_address"`
+}
+
+type MountResponse struct {
+    Type        string `json:"type"`
+    Name        string `json:"name,omitempty"`
+    Source      string `json:"source"`
+    Destination string `json:"destination"`
+    Mode        string `json:"mode"`
+    ReadWrite   bool   `json:"rw"`
 }
 
 func ToContainerInspectResponse(c docker.ContainerInspect) ContainerInspectResponse {
-    return ContainerInspectResponse{
-        ID:    c.ID,
-        Name:  c.Name,
-        Image: c.Image,
+    resp := ContainerInspectResponse{
+        ID:           c.ID,
+        Name:         c.Name,
+        Image:        c.Image,
+        Created:      c.Created,
+        Platform:     c.Platform,
+        RestartCount: c.RestartCount,
     }
+
+    // State 변환
+    if c.State != nil {
+        resp.State = &StateResponse{
+            Status:     c.State.Status,
+            Running:    c.State.Running,
+            Paused:     c.State.Paused,
+            Restarting: c.State.Restarting,
+            ExitCode:   c.State.ExitCode,
+            StartedAt:  c.State.StartedAt,
+            FinishedAt: c.State.FinishedAt,
+        }
+    }
+
+    // Config 변환
+    if c.Config != nil {
+        resp.Config = &ConfigResponse{
+            Hostname:   c.Config.Hostname,
+            User:       c.Config.User,
+            Env:        c.Config.Env,
+            Cmd:        c.Config.Cmd,
+            Entrypoint: c.Config.Entrypoint,
+            WorkingDir: c.Config.WorkingDir,
+            Labels:     c.Config.Labels,
+        }
+    }
+
+    // Network 변환
+    if c.NetworkSettings != nil {
+        resp.Network = &NetworkResponse{
+            IPAddress:  c.NetworkSettings.IPAddress,
+            Gateway:    c.NetworkSettings.Gateway,
+            MacAddress: c.NetworkSettings.MacAddress,
+        }
+
+        // Ports 변환
+        if c.NetworkSettings.Ports != nil {
+            resp.Network.Ports = make(map[string][]PortResponse)
+            for port, bindings := range c.NetworkSettings.Ports {
+                portBindings := make([]PortResponse, 0, len(bindings))
+                for _, b := range bindings {
+                    portBindings = append(portBindings, PortResponse{
+                        HostIP:   b.HostIP,
+                        HostPort: b.HostPort,
+                    })
+                }
+                resp.Network.Ports[port] = portBindings
+            }
+        }
+
+        // Networks 변환
+        if c.NetworkSettings.Networks != nil {
+            resp.Network.Networks = make(map[string]NetworkEndpointResponse)
+            for name, ep := range c.NetworkSettings.Networks {
+                resp.Network.Networks[name] = NetworkEndpointResponse{
+                    NetworkID:  ep.NetworkID,
+                    IPAddress:  ep.IPAddress,
+                    Gateway:    ep.Gateway,
+                    MacAddress: ep.MacAddress,
+                }
+            }
+        }
+    }
+
+    // Mounts 변환
+    if c.Mounts != nil {
+        resp.Mounts = make([]MountResponse, 0, len(c.Mounts))
+        for _, m := range c.Mounts {
+            resp.Mounts = append(resp.Mounts, MountResponse{
+                Type:        m.Type,
+                Name:        m.Name,
+                Source:      m.Source,
+                Destination: m.Destination,
+                Mode:        m.Mode,
+                ReadWrite:   m.RW,
+            })
+        }
+    }
+
+    return resp
 }
 
 // ============================================================================

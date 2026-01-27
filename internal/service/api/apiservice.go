@@ -59,21 +59,14 @@ func (s *ApiService) InspectContainer(ctx context.Context, containerID string) (
 		return docker.ContainerInspect{}, err
 	}
 
-	logger.Log.Print(2, "ID: %s", res.Container.ID)
-	logger.Log.Print(2, "Image : %s", res.Container.Image)
-	logger.Log.Print(2, "Name: %s", res.Container.Name)
-
-	return docker.ContainerInspect{
-		ID:    res.Container.ID,
-		Image: res.Container.Image,
-		Name:  res.Container.Name,
-	}, nil
+	return docker.ConvertInspectResult(res), nil
 }
 
 func (s *ApiService) InspectContainer2(ctx context.Context, containerID, host string) (docker.ContainerInspect, error) {
 	client, err := s.docMng.Get(host)
 	if err != nil {
 		logger.Log.Error("[InspectContainer2] Get host client error..(%v)", err)
+		return docker.ContainerInspect{}, err
 	}
 
 	res, err := client.InspectContainer(ctx, containerID)
@@ -82,15 +75,7 @@ func (s *ApiService) InspectContainer2(ctx context.Context, containerID, host st
 		return docker.ContainerInspect{}, err
 	}
 
-	logger.Log.Print(2, "ID: %s", res.Container.ID)
-	logger.Log.Print(2, "Image : %s", res.Container.Image)
-	logger.Log.Print(2, "Name: %s", res.Container.Name)
-
-	return docker.ContainerInspect{
-		ID:    res.Container.ID,
-		Image: res.Container.Image,
-		Name:  res.Container.Name,
-	}, nil
+	return docker.ConvertInspectResult(res), nil
 }
 
 func (s *ApiService) StartContainer(ctx context.Context, id string) error {
