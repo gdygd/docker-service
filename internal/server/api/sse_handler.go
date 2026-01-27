@@ -40,6 +40,10 @@ func ProcessEventMsg() {
 
 func handleSSE() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// SSE는 장시간 연결이므로 WriteTimeout 해제
+		rc := http.NewResponseController(w)
+		rc.SetWriteDeadline(time.Time{}) // 타임아웃 없음
+
 		// get sse session key
 		sessionKey := GetSSeSessionKey()
 		defer func() {

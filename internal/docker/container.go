@@ -126,9 +126,14 @@ Auto-restart 트리거
 // 	}
 // }
 
+// EventStreamRaw는 Docker Events API의 결과를 직접 반환 (EventManager용)
+func (c *Client) EventStreamRaw(ctx context.Context) client.EventsResult {
+	return c.cli.Events(ctx, client.EventsListOptions{})
+}
+
 func (c *Client) EventStream(ctx context.Context) client.EventsResult {
 	// 이벤트 액션 맵 초기화
-	initEventAction()
+	InitEventAction()
 
 	stream := c.cli.Events(ctx, client.EventsListOptions{})
 
@@ -144,22 +149,16 @@ func (c *Client) EventStream(ctx context.Context) client.EventsResult {
 			evtType := string(evt.Type)
 			evtAction := string(evt.Action)
 
-			// Type 필터
-			actions, ok := evtActionMap[evtType]
-			if !ok {
-				continue
-			}
-
-			// Action 필터
-			if !contains(actions, evtAction) {
+			// 필터 함수 사용
+			if !FilterEvent(evtType, evtAction) {
 				continue
 			}
 
 			// 기본 이벤트 로그
 			logger.Log.Print(2, "[EVENT] type=%s action=%s time=%d id=%s", evtType, evtAction, evt.Time, evt.Actor.ID)
 
-			// 4️⃣ Attribute 화이트리스트 출력
-			for _, key := range evtAttribytes {
+			// Attribute 화이트리스트 출력
+			for _, key := range EvtAttribytes {
 				if v, ok := evt.Actor.Attributes[key]; ok {
 					logger.Log.Print(2, "  - %s = %s", key, v)
 				}

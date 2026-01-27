@@ -32,20 +32,15 @@ func (server *Server) terminate(ctx *gin.Context) {
 }
 
 func (server *Server) dockerPs(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, "")
-
 	containers, err := server.service.ContainerList(ctx)
 	if err != nil {
 		logger.Log.Error("Service Container list error.. [%v]", err)
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
 
-	for i, c := range containers {
-		logger.Log.Print(2, "list[%d], (%v)", i, c)
-	}
-
-	ctx.JSON(http.StatusOK, containers)
+	response := ToContainerListResponse(containers)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }
 
 type requestHostName struct {
@@ -53,47 +48,39 @@ type requestHostName struct {
 }
 
 func (server *Server) dockerPs2(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, "")
-
 	var req requestHostName
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
 	containers, err := server.service.ContainerList2(ctx, req.Host)
 	if err != nil {
 		logger.Log.Error("Service Container list error.. [%v]", err)
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
 
-	for i, c := range containers {
-		logger.Log.Print(2, "list#2 [%d], (%v)", i, c)
-	}
-
-	ctx.JSON(http.StatusOK, containers)
+	response := ToContainerListResponse(containers)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }
 
 func (server *Server) containerInspect(ctx *gin.Context) {
 	var req requestContainerID
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
 	inspect, err := server.service.InspectContainer(ctx, req.ID)
 	if err != nil {
 		logger.Log.Error("Service Inspect container error.. [%v]", err)
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
 
-	logger.Log.Print(2, "ID: %s", inspect.ID)
-	logger.Log.Print(2, "Image: %s", inspect.Image)
-	logger.Log.Print(2, "Name: %s", inspect.Name)
-
-	ctx.JSON(http.StatusOK, inspect)
+	response := ToContainerInspectResponse(inspect)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }
 
 type requestHost_ID struct {
@@ -104,7 +91,7 @@ type requestHost_ID struct {
 func (server *Server) containerInspect2(ctx *gin.Context) {
 	var req requestHost_ID
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
@@ -119,13 +106,14 @@ func (server *Server) containerInspect2(ctx *gin.Context) {
 	logger.Log.Print(2, "Image: %s", inspect.Image)
 	logger.Log.Print(2, "Name: %s", inspect.Name)
 
-	ctx.JSON(http.StatusOK, inspect)
+	response := ToContainerInspectResponse(inspect)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }
 
 func (server *Server) statContainer(ctx *gin.Context) {
 	var req requestContainerID
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
@@ -143,13 +131,14 @@ func (server *Server) statContainer(ctx *gin.Context) {
 	logger.Log.Print(2, "rx : %d", rst.NetworkRx)
 	logger.Log.Print(2, "tx : %d", rst.NetworkTx)
 
-	ctx.JSON(http.StatusOK, "")
+	response := ToContainerStatsResponse(rst)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))	
 }
 
 func (server *Server) statContainer2(ctx *gin.Context) {
 	var req requestHost_ID
 	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
@@ -167,5 +156,6 @@ func (server *Server) statContainer2(ctx *gin.Context) {
 	logger.Log.Print(2, "rx : %d", rst.NetworkRx)
 	logger.Log.Print(2, "tx : %d", rst.NetworkTx)
 
-	ctx.JSON(http.StatusOK, rst)
+	response := ToContainerStatsResponse(rst)
+	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }

@@ -2,7 +2,7 @@ package docker
 
 type Type string
 
-var eventTypes []string = []string{
+var EventTypes []string = []string{
 	"container",
 	"daemon",
 	"image",
@@ -10,7 +10,7 @@ var eventTypes []string = []string{
 	"volume",
 }
 
-var containerEvent []string = []string{
+var ContainerEvent []string = []string{
 	"create",
 	"start",
 	"restart",
@@ -29,7 +29,7 @@ var containerEvent []string = []string{
 	"exec_die",
 }
 
-var imagerEvent []string = []string{
+var ImagerEvent []string = []string{
 	"pull",
 	"push",
 	"tag",
@@ -39,26 +39,26 @@ var imagerEvent []string = []string{
 	"load",
 }
 
-var networkEvent []string = []string{
+var NetworkEvent []string = []string{
 	"create",
 	"connect",
 	"disconnect",
 	"destroy",
 }
 
-var volumeEvent []string = []string{
+var VolumeEvent []string = []string{
 	"create",
 	"mount",
 	"unmount",
 	"destroy",
 }
 
-var daemonEvent []string = []string{
+var DaemonEvent []string = []string{
 	"reload",
 	"shutdown",
 }
 
-var evtAttribytes []string = []string{
+var EvtAttribytes []string = []string{
 	"name",                       //	컨테이너 이름
 	"image",                      //	이미지 이름
 	"exitCode",                   //	종료 코드
@@ -69,41 +69,70 @@ var evtAttribytes []string = []string{
 	"com.docker.compose.service", //	compose 서비스
 }
 
-var evtActionMap map[string][]string
+var EvtActionMap map[string][]string
 
-func initEventAction() {
-	evtActionMap = make(map[string][]string)
+func InitEventAction() {
+	EvtActionMap = make(map[string][]string)
 
-	for _, tp := range eventTypes {
-		evtActionMap[tp] = []string{}
+	for _, tp := range EventTypes {
+		EvtActionMap[tp] = []string{}
 		var events []string
 
 		if tp == "container" {
-			events = make([]string, len(containerEvent))
-			copy(events, containerEvent)
+			events = make([]string, len(ContainerEvent))
+			copy(events, ContainerEvent)
 		} else if tp == "image" {
-			events = make([]string, len(imagerEvent))
-			copy(events, imagerEvent)
+			events = make([]string, len(ImagerEvent))
+			copy(events, ImagerEvent)
 		} else if tp == "network" {
-			events = make([]string, len(networkEvent))
-			copy(events, networkEvent)
+			events = make([]string, len(NetworkEvent))
+			copy(events, NetworkEvent)
 		} else if tp == "volume" {
-			events = make([]string, len(volumeEvent))
-			copy(events, volumeEvent)
+			events = make([]string, len(VolumeEvent))
+			copy(events, VolumeEvent)
 		} else if tp == "daemon" {
-			events = make([]string, len(daemonEvent))
-			copy(events, daemonEvent)
+			events = make([]string, len(DaemonEvent))
+			copy(events, DaemonEvent)
 		}
 
-		evtActionMap[tp] = events
+		EvtActionMap[tp] = events
 	}
 }
 
-func contains(list []string, v string) bool {
+func Contains(list []string, v string) bool {
 	for _, s := range list {
 		if s == v {
 			return true
 		}
 	}
 	return false
+}
+
+// FilterEvent는 이벤트 Type과 Action이 허용 목록에 있는지 확인
+// 허용되면 true, 필터링(제외)되면 false 반환
+func FilterEvent(evtType, evtAction string) bool {
+	// EvtActionMap 초기화 확인
+	if EvtActionMap == nil {
+		InitEventAction()
+	}
+
+	// Type이 허용 목록에 있는지 확인
+	actions, ok := EvtActionMap[evtType]
+	if !ok {
+		return false
+	}
+
+	// Action이 허용 목록에 있는지 확인
+	return Contains(actions, evtAction)
+}
+
+// FilterAttrs는 허용된 Attribute만 추출
+func FilterAttrs(attrs map[string]string) map[string]string {
+	filtered := make(map[string]string)
+	for _, key := range EvtAttribytes {
+		if v, ok := attrs[key]; ok {
+			filtered[key] = v
+		}
+	}
+	return filtered
 }

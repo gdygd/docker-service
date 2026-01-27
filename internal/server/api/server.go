@@ -16,6 +16,7 @@ import (
 	"docker_service/internal/logger"
 	"docker_service/internal/server/ws"
 	"docker_service/internal/service"
+	"docker_service/internal/event"
 	apiserv "docker_service/internal/service/api"
 
 	"github.com/gdygd/goglib"
@@ -43,6 +44,8 @@ type Server struct {
 	service      service.ServiceInterface
 	dbHnd        db.DbHandler
 	ch_terminate chan bool
+
+	eventMgr *event.EventManager
 }
 
 func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bool) (*Server, error) {
@@ -65,6 +68,7 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 		ch_terminate: ch_terminate,
 		hub:          ws.NewHub(ctx),
 		svr_cancel:   cancel,
+		eventMgr: event.NewEventManager(ctx, ct.DockerMng),
 	}
 
 	server.setupRouter()
@@ -279,10 +283,20 @@ func (server *Server) updateContainerStats() {
 func (server *Server) Start() error {
 	logger.Log.Print(2, "Gin server start.")
 
+	// 1. EventManager 시작
+    server.eventMgr.Start()
+
+	// 2. 초기 호스트들 watch 시작
+    server.eventMgr.WatchHost("localhost")
+
+	// 3. SSE에 이벤트 연결
+    go server.bridgeEventsToSSE()
+
+	// 4. WebSocket Hub 시작
 	go server.hub.Run() // web socket hub
 	// go server.updateContainerStats()
 
-	go server.containerEventStream() // test
+	// go server.containerEventStream() // test
 
 	go ProcessEventMsg() // test
 	go server.sseTest()  // tests
@@ -299,6 +313,10 @@ func (server *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	defer server.wg.Done()
+
+	// EventManager 종료 (graceful)
+    server.eventMgr.Stop()
+
 	server.svr_cancel()
 
 	if err := server.srv.Shutdown(ctx); err != nil {
@@ -306,4 +324,50 @@ func (server *Server) Shutdown() error {
 		return err
 	}
 	return nil
+}
+
+// SSE로 이벤트 전달하는 브릿지
+func (server *Server) bridgeEventsToSSE() {
+    sub := server.eventMgr.Subscribe("sse-bridge", 100, nil)
+    defer server.eventMgr.Unsubscribe("sse-bridge")
+
+    for {
+        select {
+        case <-server.ctx.Done():
+            logger.Log.Print(2, "[bridgeEventsToSSE] context cancelled, stopping")
+            return
+        case evt, ok := <-sub.Events:
+			
+            if !ok {
+                logger.Log.Print(2, "[bridgeEventsToSSE] channel closed, stopping")
+                return
+            }			
+            data, _ := json.Marshal(evt)
+			
+            goglib.SendSSE(goglib.EventData{
+                Msgtype: "container-event",
+                Data:    string(data),
+            })
+        }
+    }
+}
+
+func (server *Server) bridgeEventsToWebSocket() {
+    sub := server.eventMgr.Subscribe("ws-bridge", 100, nil)
+    defer server.eventMgr.Unsubscribe("ws-bridge")
+
+    for {
+        select {
+        case <-server.ctx.Done():
+            logger.Log.Print(2, "[bridgeEventsToWebSocket] context cancelled, stopping")
+            return
+        case evt, ok := <-sub.Events:
+            if !ok {
+                logger.Log.Print(2, "[bridgeEventsToWebSocket] channel closed, stopping")
+                return
+            }
+            data, _ := json.Marshal(evt)
+            server.hub.Broadcast(data)
+        }
+    }
 }

@@ -19,6 +19,7 @@ type DockerAPI interface {
 	ContainerStats(ctx context.Context, id string, stream bool) (client.ContainerStatsResult, error)
 
 	EventStream(ctx context.Context) client.EventsResult
+	EventStreamRaw(ctx context.Context) client.EventsResult
 }
 
 // Docker Host
