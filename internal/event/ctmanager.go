@@ -200,6 +200,7 @@ func (em *EventManager) dispatcher() {
             if !ok {
                 return
             }
+            logger.Log.Print(2, "dispatcher : %v", evt)
             em.broadcast(evt)
         }
     }

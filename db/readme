@@ -1,0 +1,38 @@
+db/
+├── conf/
+│   └── my.cnf              # MariaDB 설정 파일
+├── script/
+│   ├── table               # 기존 테이블 스크립트
+│   └── init.sql            # 초기화 SQL (자동 import용)
+├── logs/                   # 로그 디렉토리
+└── docker-compose.yml      # Docker Compose 파일
+my.cnf 주요 설정:
+
+설정	값
+캐릭터셋	utf8mb4 / utf8mb4_unicode_ci
+InnoDB 버퍼	256MB
+대소문자 구분	구분 안함 (lower_case_table_names=1)
+이벤트 스케줄러	ON
+데이터 파일	/var/lib/mysql (볼륨 마운트)
+타임존	+09:00 (KST)
+DB 접속 정보:
+
+항목	값
+Database	docker
+User	dev
+Password	dev
+Root Password	root123
+Port	33061
+실행 방법:
+
+
+cd db
+docker compose up -d
+접속 테스트:
+
+
+# 컨테이너 내부에서 접속
+docker exec -it docker_mariadb mysql -u dev -pdev docker
+
+# 호스트에서 접속
+mysql -h 127.0.0.1 -P 3306 -u dev -pdev docker

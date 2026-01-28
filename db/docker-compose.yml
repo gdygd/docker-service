@@ -1,0 +1,35 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: docker_mariadb
+    restart: unless-stopped
+    ports:
+      - "33061:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: docker
+      MYSQL_USER: dev
+      MYSQL_PASSWORD: dev
+      TZ: Asia/Seoul
+    volumes:
+      # 설정 파일
+      - ./conf/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      # 초기화 스크립트 (컨테이너 최초 실행시 자동 import)
+      - ./script/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      # 데이터 영속화
+      - mariadb_data:/var/lib/mysql
+      # 로그 디렉토리
+      - ./logs:/var/log/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mariadb_data:
+    driver: local

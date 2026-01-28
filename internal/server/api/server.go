@@ -13,10 +13,10 @@ import (
 	"docker_service/internal/container"
 	"docker_service/internal/db"
 	"docker_service/internal/docker"
+	"docker_service/internal/event"
 	"docker_service/internal/logger"
 	"docker_service/internal/server/ws"
 	"docker_service/internal/service"
-	"docker_service/internal/event"
 	apiserv "docker_service/internal/service/api"
 
 	"github.com/gdygd/goglib"
@@ -68,7 +68,7 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 		ch_terminate: ch_terminate,
 		hub:          ws.NewHub(ctx),
 		svr_cancel:   cancel,
-		eventMgr: event.NewEventManager(ctx, ct.DockerMng),
+		eventMgr:     event.NewEventManager(ctx, ct.DockerMng),
 	}
 
 	server.setupRouter()
@@ -89,22 +89,24 @@ func (server *Server) setupRouter() {
 
 	addresses := strings.Split(server.config.AllowOrigins, ",")
 
+	router.Use(corsMiddleware(addresses))
+
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
 
-	router.GET("/hosts", server.dockerHostList) // docker host list info
-	router.GET("/ps", server.dockerPs) // none tls sdk api
+	router.GET("/hosts", server.dockerHostList) // docker host list info 
+	router.GET("/ps", server.dockerPs)          // none tls sdk api (x)
 
-	router.GET("/inspect/:id", server.containerInspect) // none tls sdk api
-	router.POST("/start/:id", server.startContainer)    // none tls sdk api
-	router.POST("/stop/:id", server.stopContainer)      // none tls sdk api
-	router.GET("/stat/:id", server.statContainer)       // none tls sdk api
+	router.GET("/inspect/:id", server.containerInspect) // none tls sdk api (x)
+	router.POST("/start/:id", server.startContainer)    // none tls sdk api (x)
+	router.POST("/stop/:id", server.stopContainer)      // none tls sdk api (x)
+	router.GET("/stat/:id", server.statContainer)       // none tls sdk api (x)
 
-	router.GET("/ps2/:host", server.dockerPs2) // apply tls sdk api
+	router.GET("/ps2/:host", server.dockerPs2)                  // apply tls sdk api
 	router.GET("/inspect2/:host/:id", server.containerInspect2) // apply tls sdk api
-	router.POST("/start2", server.startContainer2) // apply tls sdk api
-	router.POST("/stop2", server.stopContainer2)  // apply tls sdk api
-	router.GET("/stat2/:host/:id", server.statContainer2) // apply tls sdk api
+	router.POST("/start2", server.startContainer2)              // apply tls sdk api
+	router.POST("/stop2", server.stopContainer2)                // apply tls sdk api
+	router.GET("/stat2/:host/:id", server.statContainer2)       // apply tls sdk api
 
 	router.GET("/ws", server.wsHandler)
 	router.GET("/events", gin.WrapF(handleSSE()))
@@ -285,13 +287,19 @@ func (server *Server) Start() error {
 	logger.Log.Print(2, "Gin server start.")
 
 	// 1. EventManager 시작
-    server.eventMgr.Start()
+	server.eventMgr.Start()
 
-	// 2. 초기 호스트들 watch 시작
-    server.eventMgr.WatchHost("localhost")
+	// 2. 초기 호스트들 watch 시작 (설정된 모든 호스트)
+	hosts, _ := server.config.GetDockerHosts()
+	
+	for _, host := range hosts {
+		if err := server.eventMgr.WatchHost(host.Name); err != nil {
+			logger.Log.Error("Failed to watch host %s: %v", host, err)
+		}
+	}
 
 	// 3. SSE에 이벤트 연결
-    go server.bridgeEventsToSSE()
+	go server.bridgeEventsToSSE()
 
 	// 4. WebSocket Hub 시작
 	go server.hub.Run() // web socket hub
@@ -300,7 +308,7 @@ func (server *Server) Start() error {
 	// go server.containerEventStream() // test
 
 	go ProcessEventMsg() // test
-	go server.sseTest()  // tests
+	// go server.sseTest()  // tests
 
 	if err := server.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		logger.Log.Error("listen error. %v", err)
@@ -316,7 +324,7 @@ func (server *Server) Shutdown() error {
 	defer server.wg.Done()
 
 	// EventManager 종료 (graceful)
-    server.eventMgr.Stop()
+	server.eventMgr.Stop()
 
 	server.svr_cancel()
 
@@ -329,46 +337,49 @@ func (server *Server) Shutdown() error {
 
 // SSE로 이벤트 전달하는 브릿지
 func (server *Server) bridgeEventsToSSE() {
-    sub := server.eventMgr.Subscribe("sse-bridge", 100, nil)
-    defer server.eventMgr.Unsubscribe("sse-bridge")
+	sub := server.eventMgr.Subscribe("sse-bridge", 100, nil)
+	defer server.eventMgr.Unsubscribe("sse-bridge")
 
-    for {
-        select {
-        case <-server.ctx.Done():
-            logger.Log.Print(2, "[bridgeEventsToSSE] context cancelled, stopping")
-            return
-        case evt, ok := <-sub.Events:
-			
-            if !ok {
-                logger.Log.Print(2, "[bridgeEventsToSSE] channel closed, stopping")
-                return
-            }			
-            data, _ := json.Marshal(evt)
-			
-            goglib.SendSSE(goglib.EventData{
-                Msgtype: "container-event",
-                Data:    string(data),
-            })
-        }
-    }
+	for {
+		select {
+		case <-server.ctx.Done():
+			logger.Log.Print(2, "[bridgeEventsToSSE] context cancelled, stopping")
+			return
+		case evt, ok := <-sub.Events:
+			logger.Log.Print(2, "evt received..")
+
+			if !ok {
+				logger.Log.Print(2, "[bridgeEventsToSSE] channel closed, stopping")
+				return
+			}
+			data, _ := json.Marshal(evt)
+
+			goglib.SendSSE(goglib.EventData{
+				Msgtype: "container-event",
+				Data:    string(data),
+			})
+
+			logger.Log.Print(2, "evt send..")
+		}
+	}
 }
 
 func (server *Server) bridgeEventsToWebSocket() {
-    sub := server.eventMgr.Subscribe("ws-bridge", 100, nil)
-    defer server.eventMgr.Unsubscribe("ws-bridge")
+	sub := server.eventMgr.Subscribe("ws-bridge", 100, nil)
+	defer server.eventMgr.Unsubscribe("ws-bridge")
 
-    for {
-        select {
-        case <-server.ctx.Done():
-            logger.Log.Print(2, "[bridgeEventsToWebSocket] context cancelled, stopping")
-            return
-        case evt, ok := <-sub.Events:
-            if !ok {
-                logger.Log.Print(2, "[bridgeEventsToWebSocket] channel closed, stopping")
-                return
-            }
-            data, _ := json.Marshal(evt)
-            server.hub.Broadcast(data)
-        }
-    }
+	for {
+		select {
+		case <-server.ctx.Done():
+			logger.Log.Print(2, "[bridgeEventsToWebSocket] context cancelled, stopping")
+			return
+		case evt, ok := <-sub.Events:
+			if !ok {
+				logger.Log.Print(2, "[bridgeEventsToWebSocket] channel closed, stopping")
+				return
+			}
+			data, _ := json.Marshal(evt)
+			server.hub.Broadcast(data)
+		}
+	}
 }

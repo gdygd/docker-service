@@ -385,6 +385,132 @@ GET /stat2/119server/a1b2c3d4e5f6
 
 ---
 
+## 7. GET /events (SSE)
+
+Docker 컨테이너 이벤트를 실시간으로 수신하는 Server-Sent Events (SSE) 엔드포인트입니다.
+
+### Request
+```
+GET /events
+Accept: text/event-stream
+```
+
+### Response
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+```
+
+### Event Format
+```
+event: container-event
+data: {"host":"...","type":"...","action":"...","actor_id":"...","actor_name":"...","timestamp":...,"attrs":{...}}
+```
+
+### Event Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `host` | string | Docker 호스트 이름 |
+| `type` | string | 이벤트 타입 (`container`, `network`, `image`, `volume`, `daemon`) |
+| `action` | string | 이벤트 액션 |
+| `actor_id` | string | 대상 ID (컨테이너 ID, 네트워크 ID 등) |
+| `actor_name` | string | 대상 이름 |
+| `timestamp` | int | Unix timestamp (초) |
+| `attrs` | object | 추가 속성 정보 |
+
+### Event Types & Actions
+
+#### Container Events
+| Action | Description |
+|--------|-------------|
+| `create` | 컨테이너 생성 |
+| `start` | 컨테이너 시작 |
+| `stop` | 컨테이너 중지 |
+| `restart` | 컨테이너 재시작 |
+| `die` | 컨테이너 종료 |
+| `kill` | 컨테이너 강제 종료 |
+| `pause` | 컨테이너 일시정지 |
+| `unpause` | 컨테이너 일시정지 해제 |
+| `destroy` | 컨테이너 삭제 |
+
+#### Network Events
+| Action | Description |
+|--------|-------------|
+| `create` | 네트워크 생성 |
+| `connect` | 컨테이너가 네트워크에 연결 |
+| `disconnect` | 컨테이너가 네트워크에서 분리 |
+| `destroy` | 네트워크 삭제 |
+
+#### Image Events
+| Action | Description |
+|--------|-------------|
+| `pull` | 이미지 풀 |
+| `push` | 이미지 푸시 |
+| `tag` | 이미지 태그 |
+| `delete` | 이미지 삭제 |
+
+### Attributes (attrs)
+| Attribute | Description |
+|-----------|-------------|
+| `name` | 컨테이너/네트워크 이름 |
+| `image` | 이미지 이름 |
+| `exitCode` | 종료 코드 (die 이벤트) |
+| `execDuration` | 실행 시간 (ms) |
+| `signal` | kill 시그널 |
+| `container` | 컨테이너 ID (네트워크 이벤트) |
+| `com.docker.compose.project` | Docker Compose 프로젝트명 |
+| `com.docker.compose.service` | Docker Compose 서비스명 |
+
+### Example Events
+
+#### Container Die Event
+```
+event: container-event
+data: {"host":"119server","type":"container","action":"die","actor_id":"4a55acf11f30b628d58ce47a19bde7d30e144314b530f90a2501524e7f3f9cd4","actor_name":"final_project-redis-1","timestamp":1769573841,"attrs":{"com.docker.compose.project":"final_project","com.docker.compose.service":"redis","execDuration":"1001","exitCode":"0","image":"redis:alpine","name":"final_project-redis-1"}}
+```
+
+#### Network Connect Event
+```
+event: container-event
+data: {"host":"119server","type":"network","action":"connect","actor_id":"486c597a3abbd36a9d78d8003f1e5366c2606689e0d3db99148beaf52ce7510e","actor_name":"final_project_default","timestamp":1769573852,"attrs":{"container":"4a55acf11f30b628d58ce47a19bde7d30e144314b530f90a2501524e7f3f9cd4","name":"final_project_default"}}
+```
+
+#### Container Start Event
+```
+event: container-event
+data: {"host":"119server","type":"container","action":"start","actor_id":"4a55acf11f30b628d58ce47a19bde7d30e144314b530f90a2501524e7f3f9cd4","actor_name":"final_project-redis-1","timestamp":1769573852,"attrs":{"com.docker.compose.project":"final_project","com.docker.compose.service":"redis","image":"redis:alpine","name":"final_project-redis-1"}}
+```
+
+### JavaScript Client Example
+```javascript
+const eventSource = new EventSource('http://localhost:9083/events');
+
+eventSource.addEventListener('container-event', (event) => {
+  const data = JSON.parse(event.data);
+  console.log(`[${data.host}] ${data.type}/${data.action}: ${data.actor_name}`);
+
+  // 컨테이너 종료 이벤트 처리
+  if (data.type === 'container' && data.action === 'die') {
+    console.log(`Exit code: ${data.attrs.exitCode}`);
+  }
+});
+
+eventSource.onerror = (error) => {
+  console.error('SSE connection error:', error);
+};
+
+// 연결 종료
+// eventSource.close();
+```
+
+### cURL Example
+```bash
+curl -N -H "Accept: text/event-stream" http://localhost:9083/events
+```
+
+---
+
 ## HTTP Status Codes
 
 | Code | Description |
@@ -419,4 +545,7 @@ curl -X POST http://localhost:9083/stop2 \
 
 # 컨테이너 리소스 사용량 조회
 curl -X GET http://localhost:9083/stat2/119server/nginx-web
+
+# SSE 이벤트 스트림 수신
+curl -N -H "Accept: text/event-stream" http://localhost:9083/events
 ```

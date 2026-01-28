@@ -117,3 +117,15 @@ func (m *DockerClientManager) CloseAll() {
 		delete(m.clients, addr)
 	}
 }
+
+// GetHostNames는 등록된 모든 호스트 이름을 반환
+func (m *DockerClientManager) GetHostNames() []string {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	names := make([]string, 0, len(m.clients))
+	for name := range m.clients {
+		names = append(names, name)
+	}
+	return names
+}
