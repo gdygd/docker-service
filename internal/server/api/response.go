@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"docker_service/internal/config"
+	"docker_service/internal/db"
 	"docker_service/internal/docker"
 )
 
@@ -46,6 +47,15 @@ type userResponse struct {
 	Email             string    `json:"email"`
 	PasswordChangedAt time.Time `json:"password_changed_at"`
 	CreatedAt         time.Time `json:"created_at"`
+}
+
+func newUserResponse(user db.User) userResponse {
+	return userResponse{
+		Username:          user.Username,
+		Email:             user.Email,
+		PasswordChangedAt: user.PasswordChangedAt.Time,
+		CreatedAt:         user.CreatedAt.Time,
+	}
 }
 
 type loginUserResponse struct {

@@ -95,8 +95,8 @@ func (server *Server) setupRouter() {
 	router.GET("/terminate", server.terminate)
 
 	router.POST("/user", server.createUser)
-	// router.GET("/login", server.loginUser)
-	// router.GET("/token/renew_access", server.renewAccessToken)
+	router.POST("/login", server.loginUser)
+	router.POST("/token/renew_access", server.renewAccessToken)
 
 	router.GET("/hosts", server.dockerHostList) // docker host list info
 	router.GET("/ps", server.dockerPs)          // none tls sdk api (x)

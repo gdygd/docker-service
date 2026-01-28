@@ -25,7 +25,156 @@
 
 ---
 
-## 1. GET /hosts
+## Authentication APIs
+
+---
+
+## 1. POST /user
+
+새로운 사용자를 생성합니다.
+
+### Request
+```
+POST /user
+Content-Type: application/json
+
+{
+  "username": "gildong",
+  "password": "123123",
+  "full_name": "YunGilDong",
+  "email": "gildong@email.com"
+}
+```
+
+### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | string | Yes | 사용자 ID |
+| `password` | string | Yes | 비밀번호 |
+| `full_name` | string | Yes | 사용자 이름 |
+| `email` | string | Yes | 이메일 주소 |
+
+### Response
+```json
+{
+  "success": true,
+  "data": {
+    "username": "gildong",
+    "full_name": "YunGilDong",
+    "email": "gildong@email.com",
+    "created_at": "2026-01-28 21:33:51"
+  }
+}
+```
+
+### Response Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `username` | string | 사용자 ID |
+| `full_name` | string | 사용자 이름 |
+| `email` | string | 이메일 주소 |
+| `created_at` | string | 생성 시간 |
+
+---
+
+## 2. POST /login
+
+사용자 로그인을 수행하고 인증 토큰을 발급합니다.
+
+### Request
+```
+POST /login
+Content-Type: application/json
+
+{
+  "username": "gildong",
+  "password": "123123"
+}
+```
+
+### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `username` | string | Yes | 사용자 ID |
+| `password` | string | Yes | 비밀번호 |
+
+### Response
+```json
+{
+  "session_id": "4b2efe8c-b526-4ff3-a2fa-c1ddcb9601e9",
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token_expires_at": "2026-01-28T22:14:11.180108176+09:00",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token_expires_at": "2026-01-29T21:59:11.180211342+09:00",
+  "user": {
+    "username": "gildong",
+    "email": "gildong@email.com",
+    "password_changed_at": "2026-01-28T21:33:51Z",
+    "created_at": "2026-01-28T21:33:51Z"
+  }
+}
+```
+
+### Response Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `session_id` | string | 세션 ID (UUID) |
+| `access_token` | string | JWT 액세스 토큰 |
+| `access_token_expires_at` | string | 액세스 토큰 만료 시간 |
+| `refresh_token` | string | JWT 리프레시 토큰 |
+| `refresh_token_expires_at` | string | 리프레시 토큰 만료 시간 |
+| `user` | object | 사용자 정보 |
+
+#### User Object
+| Field | Type | Description |
+|-------|------|-------------|
+| `username` | string | 사용자 ID |
+| `email` | string | 이메일 주소 |
+| `password_changed_at` | string | 비밀번호 변경 시간 |
+| `created_at` | string | 계정 생성 시간 |
+
+---
+
+## 3. POST /token/renew_access
+
+리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.
+
+### Request
+```
+POST /token/renew_access
+Content-Type: application/json
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `refresh_token` | string | Yes | 로그인 시 발급받은 리프레시 토큰 |
+
+### Response
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "access_token_expires_at": "2026-01-28T22:32:51.341015248+09:00"
+}
+```
+
+### Response Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `access_token` | string | 새로 발급된 JWT 액세스 토큰 |
+| `access_token_expires_at` | string | 액세스 토큰 만료 시간 |
+
+---
+
+## Docker APIs
+
+---
+
+## 4. GET /hosts
 
 등록된 Docker 호스트 목록을 조회합니다.
 
@@ -59,7 +208,7 @@ GET /hosts
 
 ---
 
-## 2. GET /ps2/:host
+## 5. GET /ps2/:host
 
 특정 호스트의 컨테이너 목록을 조회합니다.
 
@@ -112,7 +261,7 @@ GET /ps2/119server
 
 ---
 
-## 3. GET /inspect2/:host/:id
+## 6. GET /inspect2/:host/:id
 
 특정 호스트의 컨테이너 상세 정보를 조회합니다.
 
@@ -260,7 +409,7 @@ GET /inspect2/119server/a1b2c3d4e5f6
 
 ---
 
-## 4. POST /start2
+## 7. POST /start2
 
 특정 호스트의 컨테이너를 시작합니다.
 
@@ -297,7 +446,7 @@ HTTP/1.1 200 OK
 
 ---
 
-## 5. POST /stop2
+## 8. POST /stop2
 
 특정 호스트의 컨테이너를 중지합니다.
 
@@ -334,7 +483,7 @@ HTTP/1.1 200 OK
 
 ---
 
-## 6. GET /stat2/:host/:id
+## 9. GET /stat2/:host/:id
 
 특정 호스트의 컨테이너 리소스 사용량을 조회합니다.
 
@@ -385,7 +534,7 @@ GET /stat2/119server/a1b2c3d4e5f6
 
 ---
 
-## 7. GET /events (SSE)
+## 10. GET /events (SSE)
 
 Docker 컨테이너 이벤트를 실시간으로 수신하는 Server-Sent Events (SSE) 엔드포인트입니다.
 
@@ -524,6 +673,21 @@ curl -N -H "Accept: text/event-stream" http://localhost:9083/events
 ## cURL Examples
 
 ```bash
+# 사용자 생성
+curl -X POST http://localhost:9083/user \
+  -H "Content-Type: application/json" \
+  -d '{"username":"gildong","password":"123123","full_name":"YunGilDong","email":"gildong@email.com"}'
+
+# 로그인
+curl -X POST http://localhost:9083/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"gildong","password":"123123"}'
+
+# 액세스 토큰 갱신
+curl -X POST http://localhost:9083/token/renew_access \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}'
+
 # 호스트 목록 조회
 curl -X GET http://localhost:9083/hosts
 

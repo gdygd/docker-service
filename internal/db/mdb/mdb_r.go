@@ -77,3 +77,50 @@ func (q *MariaDbHandler) ReadUser(ctx context.Context, username string) (db.User
 
 	return u, nil
 }
+
+func (q *MariaDbHandler) ReadUserSession(ctx context.Context, id string) (db.Session, error) {
+	ado := q.GetDB()
+	var se db.Session
+
+	query := `
+	SELECT ID          
+		 , username    
+		 , refresh_token
+		 , user_agent   
+		 , client_ip    
+		 , is_blocked   
+		 , expires_at   
+		 , created_at   
+	FROM sessions
+	WHERE ID = ?
+	`
+
+	rows, err := ado.QueryContext(ctx, query, id)
+	if err != nil {
+		return db.Session{}, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		if err := rows.Scan(
+			&se.ID,
+			&se.Username,
+			&se.RefreshToken,
+			&se.UserAgent,
+			&se.ClientIp,
+			&se.IsBlocked,
+			&se.ExpiresAt,
+			&se.CreatedAt,
+		); err != nil {
+			return db.Session{}, err
+		}
+	}
+	if err := rows.Close(); err != nil {
+		return db.Session{}, err
+	}
+	if err := rows.Err(); err != nil {
+		return db.Session{}, err
+	}
+
+	return se, nil
+}

@@ -15,3 +15,30 @@ func (s *ApiService) CreateUser(ctx context.Context, arg db.CreateUserParams) (d
 	}
 	return user, nil
 }
+
+func (s *ApiService) LoginUser(ctx context.Context, username string) (db.User, error) {
+	user, err := s.dbHnd.ReadUser(ctx, username)
+	if err != nil {
+		logger.Log.Error("[LoginUser] DB error: %v", err)
+		return db.User{}, err
+	}
+	return user, nil
+}
+
+func (s *ApiService) CreateSession(ctx context.Context, arg db.CreateSessionParams) (db.Session, error) {
+	se, err := s.dbHnd.CreateUserSession(ctx, arg)
+	if err != nil {
+		logger.Log.Error("[CreateSession] DB error: %v", err)
+		return db.Session{}, err
+	}
+	return se, nil
+}
+
+func (s *ApiService) ReadSession(ctx context.Context, id string) (db.Session, error) {
+	user, err := s.dbHnd.ReadUserSession(ctx, id)
+	if err != nil {
+		logger.Log.Error("[ReadSession] DB error: %v", err)
+		return db.Session{}, err
+	}
+	return user, nil
+}
