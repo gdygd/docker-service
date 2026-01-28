@@ -94,7 +94,11 @@ func (server *Server) setupRouter() {
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
 
-	router.GET("/hosts", server.dockerHostList) // docker host list info 
+	router.POST("/user", server.createUser)
+	// router.GET("/login", server.loginUser)
+	// router.GET("/token/renew_access", server.renewAccessToken)
+
+	router.GET("/hosts", server.dockerHostList) // docker host list info
 	router.GET("/ps", server.dockerPs)          // none tls sdk api (x)
 
 	router.GET("/inspect/:id", server.containerInspect) // none tls sdk api (x)
@@ -291,7 +295,7 @@ func (server *Server) Start() error {
 
 	// 2. 초기 호스트들 watch 시작 (설정된 모든 호스트)
 	hosts, _ := server.config.GetDockerHosts()
-	
+
 	for _, host := range hosts {
 		if err := server.eventMgr.WatchHost(host.Name); err != nil {
 			logger.Log.Error("Failed to watch host %s: %v", host, err)

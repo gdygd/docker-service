@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"docker_service/internal/db"
 	"docker_service/internal/docker"
 )
 
@@ -21,4 +22,6 @@ type ServiceInterface interface {
 	ContainerStatsStream(ctx context.Context, id string, stream bool, ch_rst chan *docker.ContainerStats) error
 
 	EventStream(ctx context.Context, host string)
+
+	CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error)
 }
