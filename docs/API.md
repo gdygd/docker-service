@@ -135,7 +135,36 @@ Content-Type: application/json
 
 ---
 
-## 3. POST /token/renew_access
+## 3. POST /logout
+
+사용자 로그아웃을 수행하고 세션을 삭제합니다.
+
+### Request
+```
+POST /logout
+Content-Type: application/json
+
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Request Body
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `refresh_token` | string | Yes | 로그인 시 발급받은 리프레시 토큰 |
+
+### Response
+```json
+{
+  "success": true,
+  "data": "logged out successfully"
+}
+```
+
+---
+
+## 4. POST /token/renew_access
 
 리프레시 토큰을 사용하여 새로운 액세스 토큰을 발급합니다.
 
@@ -174,7 +203,7 @@ Content-Type: application/json
 
 ---
 
-## 4. GET /hosts
+## 5. GET /hosts
 
 등록된 Docker 호스트 목록을 조회합니다.
 
@@ -208,7 +237,7 @@ GET /hosts
 
 ---
 
-## 5. GET /ps2/:host
+## 6. GET /ps2/:host
 
 특정 호스트의 컨테이너 목록을 조회합니다.
 
@@ -261,7 +290,7 @@ GET /ps2/119server
 
 ---
 
-## 6. GET /inspect2/:host/:id
+## 7. GET /inspect2/:host/:id
 
 특정 호스트의 컨테이너 상세 정보를 조회합니다.
 
@@ -409,7 +438,7 @@ GET /inspect2/119server/a1b2c3d4e5f6
 
 ---
 
-## 7. POST /start2
+## 8. POST /start2
 
 특정 호스트의 컨테이너를 시작합니다.
 
@@ -446,7 +475,7 @@ HTTP/1.1 200 OK
 
 ---
 
-## 8. POST /stop2
+## 9. POST /stop2
 
 특정 호스트의 컨테이너를 중지합니다.
 
@@ -483,7 +512,7 @@ HTTP/1.1 200 OK
 
 ---
 
-## 9. GET /stat2/:host/:id
+## 10. GET /stat2/:host/:id
 
 특정 호스트의 컨테이너 리소스 사용량을 조회합니다.
 
@@ -534,7 +563,86 @@ GET /stat2/119server/a1b2c3d4e5f6
 
 ---
 
-## 10. GET /events (SSE)
+## 11. GET /stat3/:host
+
+특정 호스트의 **모든 컨테이너** 리소스 사용량을 일괄 조회합니다.
+
+### Request
+```
+GET /stat3/{host}
+```
+
+### Path Parameters
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `host` | string | Yes | 호스트 식별 이름 (예: `119server`) |
+
+### Example
+```
+GET /stat3/119server
+```
+
+### Response
+```json
+{
+  "success": true,
+  "data": {
+    "58287566f213": {
+      "id": "58287566f213",
+      "name": "registry-ui-https",
+      "cpu_percent": 0,
+      "memory_usage": "2.91 MiB",
+      "memory_limit": "3.83 GiB",
+      "memory_percent": 0.07,
+      "network_rx": "401.12 KB",
+      "network_tx": "9.64 KB"
+    },
+    "7adb406b3f36": {
+      "id": "7adb406b3f36",
+      "name": "docker-service",
+      "cpu_percent": 0,
+      "memory_usage": "0.00 B",
+      "memory_limit": "0.00 B",
+      "memory_percent": 0,
+      "network_rx": "0 B",
+      "network_tx": "0 B"
+    },
+    "8d603732e1fc": {
+      "id": "8d603732e1fc",
+      "name": "docker_mariadb",
+      "cpu_percent": 0.01,
+      "memory_usage": "53.00 MiB",
+      "memory_limit": "3.83 GiB",
+      "memory_percent": 1.35,
+      "network_rx": "325.20 KB",
+      "network_tx": "367.22 KB"
+    }
+  }
+}
+```
+
+### Response Structure
+응답의 `data` 필드는 컨테이너 ID를 키로 하는 객체(Map)입니다.
+
+### Response Fields (각 컨테이너)
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | 컨테이너 ID (12자리) |
+| `name` | string | 컨테이너 이름 |
+| `cpu_percent` | float | CPU 사용률 (%) |
+| `memory_usage` | string | 메모리 사용량 (포맷팅됨) |
+| `memory_limit` | string | 메모리 제한 (포맷팅됨) |
+| `memory_percent` | float | 메모리 사용률 (%) |
+| `network_rx` | string | 네트워크 수신량 (포맷팅됨) |
+| `network_tx` | string | 네트워크 송신량 (포맷팅됨) |
+
+### Notes
+- 실행 중이지 않은 컨테이너는 `memory_usage`, `memory_limit`가 `"0.00 B"`로 표시됩니다
+- 3초 timeout이 적용되어 있으며, timeout 발생 시 수집된 결과까지만 반환됩니다
+
+---
+
+## 12. GET /events (SSE)
 
 Docker 컨테이너 이벤트를 실시간으로 수신하는 Server-Sent Events (SSE) 엔드포인트입니다.
 
@@ -683,6 +791,11 @@ curl -X POST http://localhost:9083/login \
   -H "Content-Type: application/json" \
   -d '{"username":"gildong","password":"123123"}'
 
+# 로그아웃
+curl -X POST http://localhost:9083/logout \
+  -H "Content-Type: application/json" \
+  -d '{"refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."}'
+
 # 액세스 토큰 갱신
 curl -X POST http://localhost:9083/token/renew_access \
   -H "Content-Type: application/json" \
@@ -707,8 +820,11 @@ curl -X POST http://localhost:9083/stop2 \
   -H "Content-Type: application/json" \
   -d '{"id":"nginx-web","host":"119server"}'
 
-# 컨테이너 리소스 사용량 조회
+# 컨테이너 리소스 사용량 조회 (단일)
 curl -X GET http://localhost:9083/stat2/119server/nginx-web
+
+# 컨테이너 리소스 사용량 조회 (전체)
+curl -X GET http://localhost:9083/stat3/119server
 
 # SSE 이벤트 스트림 수신
 curl -N -H "Accept: text/event-stream" http://localhost:9083/events

@@ -160,7 +160,7 @@ func (s *ApiService) ContainerStats(ctx context.Context, id string, stream bool)
 	return stats, nil
 }
 
-func (s *ApiService) ContainerStats2(ctx context.Context, id, host string, stream bool) (*docker.ContainerStats, error) {
+func (s *ApiService) ContainerStats2(ctx context.Context, host, id string, stream bool) (*docker.ContainerStats, error) {
 	client, err := s.docMng.Get(host)
 	if err != nil {
 		logger.Log.Error("[StartContainer2] Get host client error..(%v)", err)

@@ -16,6 +16,19 @@ type renewAccessTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+type logoutUserRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 type requestContainerID struct {
 	ID string `uri:"id" binding:"required"`
+}
+
+type requestHost_ID struct {
+	Host string `uri:"host" binding:"required"`
+	Id   string `uri:"id" binding:"required"`
+}
+
+type requestHostName struct {
+	Host string `uri:"host" binding:"required"`
 }

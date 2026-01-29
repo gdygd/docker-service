@@ -124,3 +124,16 @@ func (q *MariaDbHandler) ReadUserSession(ctx context.Context, id string) (db.Ses
 
 	return se, nil
 }
+
+func (q *MariaDbHandler) DeleteUserSession(ctx context.Context, id string) error {
+	ado := q.GetDB()
+
+	query := `DELETE FROM sessions WHERE ID = ?`
+
+	_, err := ado.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

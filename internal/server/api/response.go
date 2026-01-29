@@ -296,7 +296,7 @@ type ContainerStatsResponse struct {
 	NetworkTx     string  `json:"network_tx"` // "2.3 MiB"
 }
 
-func ToContainerStatsResponse(s *docker.ContainerStats) ContainerStatsResponse {
+func ToContainerStatsResponse(s docker.ContainerStats) ContainerStatsResponse {
 	return ContainerStatsResponse{
 		ID:            s.ID,
 		Name:          s.Name,

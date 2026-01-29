@@ -42,3 +42,12 @@ func (s *ApiService) ReadSession(ctx context.Context, id string) (db.Session, er
 	}
 	return user, nil
 }
+
+func (s *ApiService) DeleteSession(ctx context.Context, id string) error {
+	err := s.dbHnd.DeleteUserSession(ctx, id)
+	if err != nil {
+		logger.Log.Error("[DeleteSession] DB error: %v", err)
+		return err
+	}
+	return nil
+}

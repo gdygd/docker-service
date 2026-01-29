@@ -19,6 +19,7 @@ type ServiceInterface interface {
 	StopContainer2(ctx context.Context, id, host string) error
 	ContainerStats(ctx context.Context, id string, stream bool) (*docker.ContainerStats, error)
 	ContainerStats2(ctx context.Context, id, host string, stream bool) (*docker.ContainerStats, error)
+
 	ContainerStatsStream(ctx context.Context, id string, stream bool, ch_rst chan *docker.ContainerStats) error
 
 	EventStream(ctx context.Context, host string)
@@ -27,4 +28,5 @@ type ServiceInterface interface {
 	LoginUser(ctx context.Context, username string) (db.User, error)
 	CreateSession(ctx context.Context, arg db.CreateSessionParams) (db.Session, error)
 	ReadSession(ctx context.Context, id string) (db.Session, error)
+	DeleteSession(ctx context.Context, id string) error
 }

@@ -84,18 +84,22 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+	router.RedirectTrailingSlash = true // /path/ → /path 리다이렉트
+	router.RedirectFixedPath = true     // 대소문자/경로 자동 수정
 	// gin.SetMode(gin.DebugMode)
 	fmt.Printf("%v, \n", server.config.AllowOrigins)
 
 	addresses := strings.Split(server.config.AllowOrigins, ",")
 
 	router.Use(corsMiddleware(addresses))
+	router.Use(authMiddleware(server.tokenMaker))
 
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
 
 	router.POST("/user", server.createUser)
 	router.POST("/login", server.loginUser)
+	router.POST("/logout", server.logoutUser)
 	router.POST("/token/renew_access", server.renewAccessToken)
 
 	router.GET("/hosts", server.dockerHostList) // docker host list info
@@ -110,7 +114,8 @@ func (server *Server) setupRouter() {
 	router.GET("/inspect2/:host/:id", server.containerInspect2) // apply tls sdk api
 	router.POST("/start2", server.startContainer2)              // apply tls sdk api
 	router.POST("/stop2", server.stopContainer2)                // apply tls sdk api
-	router.GET("/stat2/:host/:id", server.statContainer2)       // apply tls sdk api
+	router.GET("/stat2/:host/:id", server.statContainer2) // apply tls sdk api
+	router.GET("/stat3/:host", server.statContainer3)      // apply tls sdk api - all container stats
 
 	router.GET("/ws", server.wsHandler)
 	router.GET("/events", gin.WrapF(handleSSE()))
@@ -122,9 +127,6 @@ func (server *Server) setupRouter() {
 	// start
 	// restart
 	// rm
-
-	router.Use(corsMiddleware(addresses))
-	router.Use(authMiddleware(server.tokenMaker))
 
 	router.GET("/test", server.testapi)
 
