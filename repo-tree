@@ -1,0 +1,63 @@
+docker-mng/
+├── services/
+│   ├── api-gateway/
+│   │   ├── cmd/main.go
+│   │   ├── internal/
+│   │   │   ├── handler/      # HTTP 핸들러
+│   │   │   ├── proxy/        # 서비스 프록시
+│   │   │   └── middleware/   # 게이트웨이 미들웨어
+│   │   ├── go.mod
+│   │   └── Dockerfile
+│   │
+│   ├── auth-service/
+│   │   ├── cmd/main.go
+│   │   ├── internal/
+│   │   │   ├── handler/      # API 핸들러
+│   │   │   ├── service/      # 비즈니스 로직
+│   │   │   ├── repository/   # DB 접근
+│   │   │   └── token/        # JWT 처리
+│   │   ├── go.mod
+│   │   └── Dockerfile
+│   │
+│   └── docker-service/
+│       ├── cmd/main.go
+│       ├── internal/
+│       │   ├── handler/
+│       │   ├── service/
+│       │   └── docker/       # Docker API 클라이언트
+│       ├── go.mod
+│       └── Dockerfile
+│
+├── pkg/                      # 공유 패키지 (별도 go.mod)
+│   ├── go.mod
+│   ├── logger/
+│   ├── response/             # 공통 응답 포맷
+│   ├── errors/               # 공통 에러 정의
+│   └── middleware/           # 공통 미들웨어
+│
+├── api/                      # API 스펙
+│   ├── proto/                # gRPC 정의
+│   └── openapi/              # OpenAPI 스펙
+│
+├── deployments/
+│   ├── docker-compose.yml    # 로컬 개발용
+│   ├── docker-compose.prod.yml
+│   └── k8s/
+│
+├── scripts/                  # 빌드/배포 스크립트
+├── docs/
+├── Makefile
+└── README.md
+
+
+
+[Client] → [API Gateway:8080]
+                ↓
+        ┌───────┴───────┐
+        ↓               ↓
+[Auth Service]    [Docker Service]
+   :8081              :8082
+        ↓               ↓
+      [DB]          [Docker API]
+
+

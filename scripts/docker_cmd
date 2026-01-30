@@ -1,0 +1,25 @@
+docker build -t docker-service:latest .
+
+
+docker run -d \
+  --name docker-service \
+  -p 9083:9083 \
+  docker-service:latest
+
+docker run \
+  -p 9083:9083 \
+  -v /home/gildong/work/go/src/docker_mng/docker_service/certs:/certs \
+  docker-service:latest
+
+
+*private registry push & pull
+docker tag docker-service:latest theroad-ygd.com:5000/docker-service:latest
+
+docker push theroad-ygd.com:5000/docker-service:latest
+
+docker pull theroad-ygd.com:5000/docker-service:latest
+
+docker run -d \
+  --name docker-service \
+  -p 9083:9083 \
+  theroad-ygd.com:5000/docker-service:latest

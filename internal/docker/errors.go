@@ -1,3 +1,0 @@
-package docker
-
-// common error

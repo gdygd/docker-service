@@ -3,6 +3,9 @@
 -start
 -stop
 -inspect
+-login
+-stat (sse)
+-resource (api)
 
 todo
 -login
