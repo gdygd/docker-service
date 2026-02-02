@@ -26,7 +26,7 @@ jobs:
           docker build \
             -t docker-service:latest \
             -t ${{ secrets.REGISTRY_URL }}/docker-service:latest \
-            .
+            ./services/docker_service
 
       # 3️⃣ Docker push
       - name: Docker push
