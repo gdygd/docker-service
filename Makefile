@@ -73,11 +73,39 @@ run:
 		$(IMAGE_NAME):latest
 
 # ---------------------------------
+# Docker Compose
+# ---------------------------------
+COMPOSE_DIR = ./deployments
+DOCKER_COMPOSE = docker compose
+
+# 개발 모드 (MODE=0)
+compose-dev:
+	cd $(COMPOSE_DIR) && $(DOCKER_COMPOSE) -f docker-compose.dev.yml up -d
+
+# 운영 모드 (MODE=1)
+compose-prod:
+	cd $(COMPOSE_DIR) && $(DOCKER_COMPOSE) -f docker-compose.prod.yml up -d
+
+# 기본 (운영 모드)
+compose-up:
+	cd $(COMPOSE_DIR) && $(DOCKER_COMPOSE) up -d
+
+compose-down:
+	cd $(COMPOSE_DIR) && $(DOCKER_COMPOSE) down
+
+compose-logs:
+	cd $(COMPOSE_DIR) && $(DOCKER_COMPOSE) logs -f
+
+compose-ps:
+	cd $(COMPOSE_DIR) && $(DOCKER_COMPOSE) ps
+
+# ---------------------------------
 # Clean
 # ---------------------------------
 clean:
-	rm -rf $(BIN_DIR)
+	rm -rf $(APIGW_BIN_DIR) $(AUTH_BIN_DIR) $(API_BIN_DIR)
 
 .PHONY: build-all build-api build-auth build-gw \
-        startgw startauth startapi allstart allstop \
-        test run clean
+        startgw startauth startapi allstart allstop allstop-port \
+        test run clean \
+        compose-dev compose-prod compose-up compose-down compose-logs compose-ps

@@ -1,0 +1,89 @@
+# ===========================================
+# Docker Compose - Production Mode
+# ===========================================
+# Usage:
+#   docker compose -f docker-compose.prod.yml up -d
+# ===========================================
+
+services:
+  # -----------------------------------------
+  # API Gateway (운영 모드)
+  # -----------------------------------------
+  api-gateway:
+    image: ${REGISTRY_URL:-theroad-ygd.com:5000}/api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "9081:9081"
+    volumes:
+      - ../services/api-gateway/bin/app.env:/app/app.env:ro
+    command: ["-MODE=1"]  # 운영 모드
+    depends_on:
+      - auth-service
+      - docker-service
+    networks:
+      - docker-mng
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  # -----------------------------------------
+  # Auth Service
+  # -----------------------------------------
+  auth-service:
+    image: ${REGISTRY_URL:-theroad-ygd.com:5000}/auth-service:latest
+    container_name: auth-service
+    ports:
+      - "9090:9090"
+      - "9190:9190"
+      - "9091:9091"
+    environment:
+      - DB_DRIVER=mariadb
+      - DB_ADDRESS=docker_mariadb
+      - DB_PORT=33061
+      - DB_USER=${DB_USER:-dev}
+      - DB_PASSWD=${DB_PASSWORD:-dev}
+      - DB_NAME=${DB_NAME:-docker}
+    volumes:
+      - ../services/auth_service/bin/app.env:/app/app.env:ro
+    depends_on:
+      - mariadb
+      - redis
+    networks:
+      - docker-mng
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # -----------------------------------------
+  # Docker Service
+  # -----------------------------------------
+  docker-service:
+    image: ${REGISTRY_URL:-theroad-ygd.com:5000}/docker-service:latest
+    container_name: docker-service
+    ports:
+      - "9083:9083"
+    environment:
+      - CERT_PATH=/certs
+    volumes:
+      - ../services/docker_service/bin/app.env:/app/app.env:ro
+      - /home/gildong/work/go/src/docker_mng/docker_service/services/docker_service/certs:/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - docker-mng
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+networks:
+  docker-mng:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+  redis_data:

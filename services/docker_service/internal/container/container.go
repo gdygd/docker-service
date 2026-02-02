@@ -1,14 +1,13 @@
 package container
 
 import (
-	"fmt"
-
 	"docker_service/internal/config"
 	"docker_service/internal/db"
 	"docker_service/internal/db/mdb"
 	"docker_service/internal/docker"
 	"docker_service/internal/logger"
 	"docker_service/internal/memory"
+	"fmt"
 )
 
 type Container struct {
@@ -38,7 +37,7 @@ func NewContainer() (*Container, error) {
 	obj := memory.InitRedisDb(config.RedisAddr)
 	container.ObjDb = obj
 
-	// init docker client
+	// init docker client (docker 소켓에 연결, local host)
 	dcCli, err := docker.New()
 	if err != nil {
 		logger.Log.Error("init docker client error..(%v)", err)
@@ -78,6 +77,9 @@ func initConfig() (config.Config, error) {
 
 func initDatabase(config config.Config) db.DbHandler {
 	mdb := mdb.NewMdbHandler(config.DBUser, config.DBPasswd, config.DBSName, config.DBAddress, config.DBPort)
-	mdb.Init()
+	err := mdb.Init()
+	if err != nil {
+		logger.Log.Error("Db Init err.. %v", err)
+	}
 	return mdb
 }

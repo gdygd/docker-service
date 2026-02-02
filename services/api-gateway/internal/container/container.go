@@ -4,6 +4,7 @@ import (
 	"api-gateway/internal/config"
 	"api-gateway/internal/db"
 	"api-gateway/internal/db/mdb"
+	"api-gateway/internal/logger"
 	"api-gateway/internal/memory"
 	"fmt"
 )
@@ -14,8 +15,10 @@ type Container struct {
 	ObjDb  *memory.RedisDb
 }
 
-var container *Container
-var runMode config.RunMode = config.ModeDev // 기본값: 개발 모드
+var (
+	container *Container
+	runMode   config.RunMode = config.ModeDev // 기본값: 개발 모드
+)
 
 // SetRunMode 실행 모드 설정 (container 생성 전에 호출)
 func SetRunMode(mode int) {
@@ -23,7 +26,6 @@ func SetRunMode(mode int) {
 }
 
 func NewContainer() (*Container, error) {
-
 	container = &Container{}
 	// load config
 	cfg, err := initConfig()
@@ -49,6 +51,9 @@ func initConfig() (config.Config, error) {
 
 func initDatabase(config config.Config) db.DbHandler {
 	mdb := mdb.NewMdbHandler(config.DBUser, config.DBPasswd, config.DBSName, config.DBAddress, config.DBPort)
-	mdb.Init()
+	err := mdb.Init()
+	if err != nil {
+		logger.Log.Error("Db Init err.. %v", err)
+	}
 	return mdb
 }

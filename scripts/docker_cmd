@@ -1,4 +1,6 @@
 docker build -t docker-service:latest .
+docker build -t auth-service:latest .
+docker build -t api-gateway:latest .
 
 
 docker run -d \

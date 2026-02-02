@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/config"
 	"auth-service/internal/db"
 	"auth-service/internal/db/mdb"
+	"auth-service/internal/logger"
 	"auth-service/internal/memory"
 	"fmt"
 )
@@ -17,7 +18,6 @@ type Container struct {
 var container *Container
 
 func NewContainer() (*Container, error) {
-
 	container = &Container{}
 	// load config
 	config, err := initConfig()
@@ -38,12 +38,14 @@ func NewContainer() (*Container, error) {
 }
 
 func initConfig() (config.Config, error) {
-
 	return config.LoadConfig(".")
 }
 
 func initDatabase(config config.Config) db.DbHandler {
 	mdb := mdb.NewMdbHandler(config.DBUser, config.DBPasswd, config.DBSName, config.DBAddress, config.DBPort)
-	mdb.Init()
+	err := mdb.Init()
+	if err != nil {
+		logger.Log.Error("Db Init err.. %v", err)
+	}
 	return mdb
 }

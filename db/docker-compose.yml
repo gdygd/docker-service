@@ -29,7 +29,13 @@ services:
     #   timeout: 5s
     #   retries: 3
     #   start_period: 30s
+    networks:
+      - docker-mng
 
 volumes:
   mariadb_data:
     driver: local
+
+networks:
+  docker-mng:
+    external: true  # 이미 존재하는 외부 네트워크 사용
