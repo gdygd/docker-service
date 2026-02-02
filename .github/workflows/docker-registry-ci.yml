@@ -56,17 +56,29 @@ jobs:
         run: |
           docker push ${{ secrets.REGISTRY_URL }}/api-gateway:latest
 
-      # # 4️⃣ (검증) pull 테스트
-      # - name: Docker pull verify
-      #   run: |
-      #     docker rmi ${{ secrets.REGISTRY_URL }}/docker-service:latest || true
-      #     docker pull ${{ secrets.REGISTRY_URL }}/docker-service:latest
+      # 4️⃣ (검증) pull 테스트
+      - name: Docker pull verify
+        run: |
+          docker rmi ${{ secrets.REGISTRY_URL }}/docker-service:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/docker-service:latest
+          
+          docker rmi ${{ secrets.REGISTRY_URL }}/auth-service:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/auth-service:latest
 
-      # # 5️⃣ Stop & remove existing container
-      # - name: Stop existing container
-      #   run: |
-      #     docker stop docker-service || true
-      #     docker rm docker-service || true
+          docker rmi ${{ secrets.REGISTRY_URL }}/api-gateway:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/api-gateway:latest
+
+      # 5️⃣ Stop & remove existing container
+      - name: Stop existing container
+        run: |
+          docker stop docker-service || true
+          docker rm docker-service || true
+
+          docker stop auth-service || true
+          docker rm auth-service || true
+
+          docker stop api-gateway || true
+          docker rm api-gateway || true
 
       # # 6️⃣ Run new container 🚀
       # - name: Run docker-service
