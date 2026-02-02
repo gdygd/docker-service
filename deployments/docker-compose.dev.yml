@@ -34,7 +34,7 @@ services:
     environment:
       - DB_DRIVER=mariadb
       - DB_ADDRESS=docker_mariadb
-      - DB_PORT=33061
+      - DB_PORT=3306
       - DB_USER=dev
       - DB_PASSWD=dev
       - DB_NAME=docker
@@ -64,7 +64,7 @@ services:
 
 networks:
   docker-mng:
-    driver: bridge
+    external: true
 
 volumes:
   mariadb_data:

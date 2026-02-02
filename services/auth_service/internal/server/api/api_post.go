@@ -2,6 +2,7 @@ package api
 
 import (
 	"auth-service/internal/db"
+	"auth-service/internal/logger"
 	"auth-service/internal/util"
 	"database/sql"
 	"fmt"
@@ -150,6 +151,13 @@ func (server *Server) renewAccessToken(ctx *gin.Context) {
 	}
 
 	refreshPayload, err := server.tokenMaker.VerifyToken(req.RefreshToken)
+	if err != nil {
+		logger.Log.Print(2, "token verify err.. %v", err)
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	logger.Log.Print(2, "ssid : %v", refreshPayload.ID.String())
 
 	se, err := server.service.ReadSession(ctx, refreshPayload.ID.String())
 	if err != nil {
