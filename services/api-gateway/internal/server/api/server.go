@@ -28,10 +28,10 @@ const (
 	W_TIME_OUT = 5 * time.Second
 )
 
-var serviceMap = map[string]string{
-	"/auth":   "http://localhost:9082",
-	"/docker": "http://localhost:9083",
-}
+// var serviceMap = map[string]string{
+// 	"/auth":   "http://localhost:9082",
+// 	"/docker": "http://localhost:9083",
+// }
 
 // Server serves HTTP requests for our banking service.
 type Server struct {
@@ -81,6 +81,9 @@ func newReverseProxy(target string) *httputil.ReverseProxy {
 }
 
 func (server *Server) setupRouter() {
+	logger.Log.Print(2, "auth url : %v", server.config.AUTH_SERVICE_URL)
+	logger.Log.Print(2, "docker url : %v", server.config.DOCKER_SERVICE_URL)
+
 	router := gin.Default()
 	// gin.SetMode(gin.DebugMode)
 	// fmt.Printf("%v, \n", server.config.AllowOrigins)
@@ -95,14 +98,18 @@ func (server *Server) setupRouter() {
 
 	// prefix 단위 라우팅
 	router.Any("/auth/*proxyPath", func(c *gin.Context) {
-		proxy := newReverseProxy(serviceMap["/auth"])
+		addr := server.config.AUTH_SERVICE_URL
+		// proxy := newReverseProxy(serviceMap["/auth"])
+		proxy := newReverseProxy(addr)
 		c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/auth")
 		logger.Log.Print(2, "auth path : %s", c.Request.URL.Path)
 		proxy.ServeHTTP(c.Writer, c.Request)
 	})
 
 	router.Any("/docker/*proxyPath", func(c *gin.Context) {
-		proxy := newReverseProxy(serviceMap["/docker"])
+		addr := server.config.DOCKER_SERVICE_URL
+		// proxy := newReverseProxy(serviceMap["/docker"])
+		proxy := newReverseProxy(addr)
 		c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/docker")
 		logger.Log.Print(2, "docker path : %s", c.Request.URL.Path)
 		proxy.ServeHTTP(c.Writer, c.Request)

@@ -127,10 +127,17 @@ func clearEnv() {
 }
 
 func main() {
-	process_mode := flag.String("mode", "debug", "프로세스 실행 모드를 선택")
+	// MODE 파라미터 파싱: 0=dev, 1=opr
+	runMode := flag.Int("MODE", 0, "실행 모드 (0: dev, 1: opr)")
 	flag.Parse()
-	logger.Log.Print(2, "process mode : %s", *process_mode)
-	logger.Log.Print(2, "남은 인자들:", flag.Args())
+
+	// 실행 모드 설정
+	container.SetRunMode(*runMode)
+	if *runMode == 0 {
+		logger.Log.Print(2, "🔧 Running in DEVELOPMENT mode")
+	} else {
+		logger.Log.Print(2, "🚀 Running in PRODUCTION mode")
+	}
 
 	ok := initEnv()
 	defer clearEnv()
