@@ -12,3 +12,30 @@ todo
 -stat (sse)
 -resource (ws)
 
+=============================
+agent 기능
+- container list
+- inspect
+- stat
+- event
+
+- start & stop -> (saas에서 명령 저장, agent에서 command 주기적으로 조회)
+
+commands table
+- id
+- agent_id
+- target_type (container)
+- target_id
+- action (start/stop/restart)
+- status (pending/running/done/failed)
+- created_at
+
+
+
+
+위 항목은 agent에서 수집 후 주기적으로  saas 서버에 올릴거야, 
+
+근데 start, stop 같은 제어 명령은 어떻게 해야돼?
+agent는 outbound만 가능하잖아
+
+
