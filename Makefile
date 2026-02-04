@@ -26,13 +26,13 @@ build-gw:
 # Start (build & run)
 # ---------------------------------
 startgw: build-gw
-	cd $(APIGW_SERVICE_PATH)/bin && ./api-gateway
+	cd $(APIGW_SERVICE_PATH)/bin && ./api-gateway &
 
 startauth: build-auth
-	cd $(AUTH_BIN_DIR) && ./auth-service
+	cd $(AUTH_BIN_DIR) && ./auth-service &
 
 startapi: build-api
-	cd $(API_BIN_DIR) && ./docker-service
+	cd $(API_BIN_DIR) && ./docker-service &
 
 allstart: build-all startgw startauth startapi
 # 	@echo "Starting all services..."
@@ -43,9 +43,9 @@ allstart: build-all startgw startauth startapi
 
 allstop:
 	@echo "Stopping all services..."
-	@pkill -f "./api-gateway" || true
-	@pkill -f "./auth-service" || true
-	@pkill -f "./docker-service" || true
+	@pkill "./api-gateway" || true
+	@pkill "./auth-service" || true
+	@pkill "./docker-service" || true
 	@echo "All services stopped"
 
 # 포트 기반 종료 (더 확실함)

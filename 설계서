@@ -1,4 +1,5 @@
 Agent
+>> multi host(tls tcp) and local host 지원 (docker.sock)
 -docker_service
  *done
  > docker sdk구현

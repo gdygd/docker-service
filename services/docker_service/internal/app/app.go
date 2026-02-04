@@ -4,6 +4,7 @@ import (
 	"context"
 	"docker_service/internal/container"
 	"docker_service/internal/logger"
+	"docker_service/internal/pipeline"
 	"docker_service/internal/pipeline/collector"
 	"docker_service/internal/server/api"
 	"sync"
@@ -77,6 +78,17 @@ func (app *Application) startPipeline() {
 		// TODO: gRPC Sender로 전송
 		logger.Log.Print(2, "[Pipeline] type=%s host=%s timestamp=%v",
 			msg.Type, msg.Host, msg.Timestamp)
+
+		if msg.Type == "list" {
+			containers := msg.Data.(pipeline.ContainerListData)
+			logger.Log.Print(2, "Container List >> ")
+			for _, c := range containers.Containers {
+				logger.Log.Print(2, "\t ID:%s, Name:%s, Image:%s, State:%s, Status:%s ",
+					c.ID, c.Name, c.Image, c.State, c.Status)
+			}
+
+		}
+
 	}
 }
 
