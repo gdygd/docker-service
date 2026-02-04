@@ -12,7 +12,8 @@ import (
 type CollectorType string
 
 const (
-	TypeList CollectorType = "list"
+	TypeList    CollectorType = "list"
+	TypeInspect CollectorType = "inspect"
 )
 
 // Manager 멀티 호스트 Collector 관리자
@@ -51,6 +52,8 @@ func (m *Manager) RegisterCollectors(hostName string, types []CollectorType, cfg
 		switch t {
 		case TypeList:
 			c = NewListCollector(client, cfg)
+		case TypeInspect:
+			c = NewInspectCollector(client, cfg)
 		}
 		if c != nil {
 			collectors = append(collectors, c)

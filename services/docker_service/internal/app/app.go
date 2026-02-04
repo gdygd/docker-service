@@ -36,7 +36,7 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 		IntervalSec: 30, // 30초 주기
 		BufferSize:  50,
 	}
-	if err := pipelineMgr.RegisterAllHosts([]collector.CollectorType{collector.TypeList}, cfg); err != nil {
+	if err := pipelineMgr.RegisterAllHosts([]collector.CollectorType{collector.TypeList, collector.TypeInspect}, cfg); err != nil {
 		logger.Log.Error("Pipeline collector registration fail.. %v", err)
 	}
 
@@ -79,14 +79,37 @@ func (app *Application) startPipeline() {
 		logger.Log.Print(2, "[Pipeline] type=%s host=%s timestamp=%v",
 			msg.Type, msg.Host, msg.Timestamp)
 
-		if msg.Type == "list" {
+		if msg.Type == pipeline.DataTypeList {
 			containers := msg.Data.(pipeline.ContainerListData)
 			logger.Log.Print(2, "Container List >> ")
 			for _, c := range containers.Containers {
-				logger.Log.Print(2, "\t ID:%s, Name:%s, Image:%s, State:%s, Status:%s ",
+				logger.Log.Print(1, "\t ID:%s, Name:%s, Image:%s, State:%s, Status:%s ",
 					c.ID, c.Name, c.Image, c.State, c.Status)
 			}
+		}
+		if msg.Type == pipeline.DataTypeInspect {
+			inspects := msg.Data.(pipeline.ContainerInspectData)
+			logger.Log.Print(2, "Inspect data List >> ")
+			for _, ins := range inspects.Inspects {
+				logger.Log.Print(2, "#[basic] Id:%s, Name:%s, Created:%s Platform:%s",
+					ins.ID, ins.Name, ins.Created, ins.Platform,
+				)
+				logger.Log.Print(2, "\t [state] stt:%s, runngin:%v, exitcode:%d, startedat:%s",
+					ins.State.Status, ins.State.Running, ins.State.ExitCode, ins.State.StartedAt,
+				)
+				logger.Log.Print(2, "\t [config] host:%s, user:%v, env:%v, cmd:%v",
+					ins.Config.Hostname, ins.Config.User, ins.Config.Env, ins.Config.Cmd,
+				)
 
+				logger.Log.Print(2, "\t [network] ip:%s, gw:%v, mac:%v, port:%v",
+					ins.Network.IPAddress, ins.Network.Gateway, ins.Network.MacAddress, ins.Network.Ports,
+				)
+				for _, m := range ins.Mounts {
+					logger.Log.Print(2, "\t [mount] type:%s, name:%v, src:%v, dst:%v mode:%s, rw:%v",
+						m.Type, m.Name, m.Source, m.Destination, m.Mode, m.RW,
+					)
+				}
+			}
 		}
 
 	}

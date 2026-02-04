@@ -17,7 +17,7 @@ type ListCollector struct {
 	buffer   *RingBuffer
 	stopCh   chan struct{}
 	stopOnce sync.Once
-	wg       sync.WaitGroup
+	wg       sync.WaitGroup // 루틴 종료 대기
 }
 
 // NewListCollector ListCollector 생성
