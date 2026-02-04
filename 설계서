@@ -13,8 +13,14 @@ Agent
 
 -pipeline추가
  > container list 정보 수집
+ > inspect 정보 수집
  / app 패키지에서 생성 및 start
  > buffer channel 관리(ring buffer) -> 버퍼가 가득 차면 → 가장 오래된 메시지 제거 → 새 메시지 추가
+
+ --> apiserver동일한 구조로 리팩토링
+    Application
+    ├── ApiServer (api.Server)
+    └── PipeServer (pipe.Server)
 
  *todo
  > agent -> saas  outbound연결 (https rest or grpc)

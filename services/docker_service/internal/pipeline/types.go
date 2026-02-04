@@ -108,3 +108,19 @@ type MountPointInfo struct {
 	Mode        string `json:"mode"`
 	RW          bool   `json:"rw"`
 }
+
+// ContainerStatsData Stats 수집 데이터
+type ContainerStatsData struct {
+	Stats []ContainerStatsInfo `json:"stats"`
+}
+
+type ContainerStatsInfo struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	CPUPercent    float64 `json:"cpu_percent"`
+	MemoryUsage   uint64  `json:"memory_usage"`   // bytes
+	MemoryLimit   uint64  `json:"memory_limit"`   // bytes
+	MemoryPercent float64 `json:"memory_percent"`
+	NetworkRx     uint64  `json:"network_rx"` // bytes
+	NetworkTx     uint64  `json:"network_tx"` // bytes
+}
