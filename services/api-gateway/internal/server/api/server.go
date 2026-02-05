@@ -75,6 +75,58 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 	return server, nil
 }
 
+func newRESTProxy(target string) *httputil.ReverseProxy {
+	url, _ := url.Parse(target)
+	return httputil.NewSingleHostReverseProxy(url)
+}
+
+// func newSSEProxy(target string) *httputil.ReverseProxy {
+// 	url, _ := url.Parse(target)
+
+// 	proxy := httputil.NewSingleHostReverseProxy(url)
+
+// 	proxy.Transport = &http.Transport{
+// 		ForceAttemptHTTP2:     false,
+// 		ResponseHeaderTimeout: 0,
+// 	}
+
+// 	proxy.ModifyResponse = func(resp *http.Response) error {
+// 		resp.Header.Set("Content-Type", "text/event-stream")
+// 		resp.Header.Set("Cache-Control", "no-cache")
+// 		resp.Header.Set("Connection", "keep-alive")
+// 		return nil
+// 	}
+
+// 	return proxy
+// }
+
+func newSSEProxy(target string) *httputil.ReverseProxy {
+	url, _ := url.Parse(target)
+	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	proxy.Transport = &http.Transport{
+		ForceAttemptHTTP2:     false, // 🔥 이거 없으면 거의 100% 끊김
+		DisableKeepAlives:     false,
+		ResponseHeaderTimeout: 0,
+	}
+
+	proxy.FlushInterval = -1
+
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		resp.Header.Set("Content-Type", "text/event-stream")
+		resp.Header.Set("Cache-Control", "no-cache")
+		resp.Header.Set("Connection", "keep-alive")
+		resp.Header.Set("Access-Control-Allow-Origin", "*")
+		return nil
+	}
+
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		logger.Log.Print(2, "SSE proxy error: %v", err)
+	}
+
+	return proxy
+}
+
 func newReverseProxy(target string) *httputil.ReverseProxy {
 	url, _ := url.Parse(target)
 	return httputil.NewSingleHostReverseProxy(url)
@@ -84,17 +136,17 @@ func (server *Server) setupRouter() {
 	logger.Log.Print(2, "auth url : %v", server.config.AUTH_SERVICE_URL)
 	logger.Log.Print(2, "docker url : %v", server.config.DOCKER_SERVICE_URL)
 
-	router := gin.Default()
+	// router := gin.Default()
+	router := gin.New()
+	addresses := strings.Split(server.config.AllowOrigins, ",")
+	router.Use(corsMiddleware(addresses))
+	// router.Use(authMiddleware(server.tokenMaker))
+
 	// gin.SetMode(gin.DebugMode)
 	// fmt.Printf("%v, \n", server.config.AllowOrigins)
 
-	addresses := strings.Split(server.config.AllowOrigins, ",")
-
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
-
-	router.Use(corsMiddleware(addresses))
-	// router.Use(authMiddleware(server.tokenMaker))
 
 	// prefix 단위 라우팅
 	router.Any("/auth/*proxyPath", func(c *gin.Context) {
@@ -107,11 +159,41 @@ func (server *Server) setupRouter() {
 	})
 
 	router.Any("/docker/*proxyPath", func(c *gin.Context) {
-		addr := server.config.DOCKER_SERVICE_URL
+		// addr := server.config.DOCKER_SERVICE_URL
 		// proxy := newReverseProxy(serviceMap["/docker"])
-		proxy := newReverseProxy(addr)
+
+		logger.Log.Print(2, "docker url :%v ", c.Request.URL)
+
+		// proxy := newReverseProxy(addr)
+		proxy := newRESTProxy(server.config.DOCKER_SERVICE_URL)
 		c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/docker")
 		logger.Log.Print(2, "docker path : %s", c.Request.URL.Path)
+		proxy.ServeHTTP(c.Writer, c.Request)
+	})
+
+	// SSE 전용
+	// router.GET("/docker-sse/events", func(c *gin.Context) {
+	// 	logger.Log.Print(2, "docker-sse url :%v ", c.Request.URL)
+
+	// 	proxy := newSSEProxy(server.config.DOCKER_SERVICE_URL)
+	// 	proxy.FlushInterval = -1
+	// 	c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/docker-sse")
+	// 	logger.Log.Print(2, "dockersse path : %s", c.Request.URL.Path)
+	// 	proxy.ServeHTTP(c.Writer, c.Request)
+	// })
+
+	// SSE 전용
+	router.GET("/docker-sse/events", func(c *gin.Context) {
+		logger.Log.Print(2, "docker-sse url :%v ", c.Request.URL)
+
+		// WriteTimeout 비활성화
+		rc := http.NewResponseController(c.Writer)
+		rc.SetWriteDeadline(time.Time{}) // deadline 제거
+
+		proxy := newSSEProxy(server.config.DOCKER_SERVICE_URL)
+		proxy.FlushInterval = -1
+		c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/docker-sse")
+		logger.Log.Print(2, "dockersse path : %s", c.Request.URL.Path)
 		proxy.ServeHTTP(c.Writer, c.Request)
 	})
 

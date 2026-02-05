@@ -61,20 +61,24 @@ func (server *Server) createUser(ctx *gin.Context) {
 }
 
 func (server *Server) loginUser(ctx *gin.Context) {
+	logger.Log.Print(2, "loginUser #1")
 	var req loginUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
+		logger.Log.Print(2, "loginUser #2 err %v", err)
 		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
 	user, err := server.service.LoginUser(ctx, req.Username)
 	if err != nil {
+		logger.Log.Print(2, "loginUser #3 err %v", err)
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
 
 	err = util.CheckPassword(req.Password, user.HashedPassword)
 	if err != nil {
+		logger.Log.Print(2, "loginUser #4 err %v", err)
 		ctx.JSON(http.StatusUnauthorized, ErrorResponse(err.Error()))
 		return
 	}
@@ -84,6 +88,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		server.config.AccessTokenDuration,
 	)
 	if err != nil {
+		logger.Log.Print(2, "loginUser #5 err %v", err)
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
@@ -105,6 +110,7 @@ func (server *Server) loginUser(ctx *gin.Context) {
 
 	se, err := server.service.CreateSession(ctx, ssparam)
 	if err != nil {
+		logger.Log.Print(2, "loginUser #6 err %v", err)
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}

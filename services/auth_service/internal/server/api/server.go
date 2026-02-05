@@ -70,16 +70,17 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 
 func (server *Server) setupRouter() {
 	router := gin.Default()
+	// router := gin.New()
+	addresses := strings.Split(server.config.AllowOrigins, ",")
+	router.Use(corsMiddleware(addresses))
+	router.Use(authMiddleware(server.tokenMaker))
+
 	// gin.SetMode(gin.DebugMode)
 	fmt.Printf("%v, \n", server.config.AllowOrigins)
-
-	addresses := strings.Split(server.config.AllowOrigins, ",")
 
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
 
-	router.Use(corsMiddleware(addresses))
-	router.Use(authMiddleware(server.tokenMaker))
 	router.GET("/test", server.testapi)
 	router.POST("/user", server.createUser)
 	router.POST("/login", server.loginUser)

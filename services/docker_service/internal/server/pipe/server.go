@@ -105,7 +105,7 @@ func (s *Server) processMessages(outCh <-chan pipeline.Message) {
 // handleMessage 개별 메시지 처리
 func (s *Server) handleMessage(msg pipeline.Message) {
 	// TODO: gRPC Sender로 전송
-	logger.Log.Print(2, "[PipeServer] type=%s host=%s timestamp=%v",
+	logger.Log.Print(1, "[PipeServer] type=%s host=%s timestamp=%v",
 		msg.Type, msg.Host, msg.Timestamp)
 
 	switch msg.Type {
@@ -119,7 +119,7 @@ func (s *Server) handleMessage(msg pipeline.Message) {
 // handleListMessage Container List 메시지 처리
 func (s *Server) handleListMessage(msg pipeline.Message) {
 	containers := msg.Data.(pipeline.ContainerListData)
-	logger.Log.Print(2, "[PipeServer] Container List (%d )>> ", len(containers.Containers))
+	logger.Log.Print(1, "[PipeServer] Container List (%d )>> ", len(containers.Containers))
 	for _, c := range containers.Containers {
 		logger.Log.Print(1, "\t ID:%s, Name:%s, Image:%s, State:%s, Status:%s",
 			c.ID, c.Name, c.Image, c.State, c.Status)

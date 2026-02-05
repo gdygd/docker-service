@@ -26,15 +26,19 @@ build-gw:
 # Start (build & run)
 # ---------------------------------
 startgw: build-gw
-	cd $(APIGW_SERVICE_PATH)/bin && ./api-gateway &
+	cd $(APIGW_SERVICE_PATH)/bin && ./api-gateway
 
 startauth: build-auth
-	cd $(AUTH_BIN_DIR) && ./auth-service &
+	cd $(AUTH_BIN_DIR) && ./auth-service
 
 startapi: build-api
-	cd $(API_BIN_DIR) && ./docker-service &
+	cd $(API_BIN_DIR) && ./docker-service
 
-allstart: build-all startgw startauth startapi
+#allstart: build-all startgw startauth startapi
+allstart: 
+	cd $(APIGW_SERVICE_PATH)/bin && ./api-gateway &
+	cd $(AUTH_BIN_DIR) && ./auth-service &
+	cd $(API_BIN_DIR) && ./docker-service &
 # 	@echo "Starting all services..."
 # 	$(APIGW_SERVICE_PATH)/api-gateway &
 # 	$(AUTH_BIN_DIR)/auth-service &
