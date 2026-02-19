@@ -13,7 +13,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -89,10 +88,10 @@ func (server *Server) setupRouter() {
 	// gin.SetMode(gin.DebugMode)
 	fmt.Printf("%v, \n", server.config.AllowOrigins)
 
-	addresses := strings.Split(server.config.AllowOrigins, ",")
+	// addresses := strings.Split(server.config.AllowOrigins, ",")
 
-	router.Use(corsMiddleware(addresses))
-	router.Use(authMiddleware(server.tokenMaker))
+	// router.Use(corsMiddleware(addresses))
+	// router.Use(authMiddleware(server.tokenMaker))
 
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)

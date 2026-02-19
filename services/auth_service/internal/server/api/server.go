@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 
@@ -71,12 +70,12 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 func (server *Server) setupRouter() {
 	router := gin.Default()
 	// router := gin.New()
-	addresses := strings.Split(server.config.AllowOrigins, ",")
-	router.Use(corsMiddleware(addresses))
-	router.Use(authMiddleware(server.tokenMaker))
+	// addresses := strings.Split(server.config.AllowOrigins, ",")
+	// router.Use(corsMiddleware(addresses))
+	// router.Use(authMiddleware(server.tokenMaker))
 
 	// gin.SetMode(gin.DebugMode)
-	fmt.Printf("%v, \n", server.config.AllowOrigins)
+	// fmt.Printf("%v, \n", server.config.AllowOrigins)
 
 	router.GET("/heartbeat", server.heartbeat)
 	router.GET("/terminate", server.terminate)
