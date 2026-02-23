@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -110,3 +111,39 @@ func (server *Server) Shutdown() error {
 	}
 	return nil
 }
+
+func SetCookie(c *gin.Context, name string, value string, expTm time.Time, maxAge int) {
+	// 운영환경 여부 (예: ENV=prod)
+	isProd := os.Getenv("ENV") == "prod"
+
+	cookie := &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		Expires:  expTm,
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		Secure:   isProd, // 운영환경이면 HTTPS만 허용
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	// Domain은 환경변수로 설정 (IP 환경이면 비워둠)
+	domain := os.Getenv("COOKIE_DOMAIN")
+	if domain != "" {
+		cookie.Domain = domain
+	}
+
+	http.SetCookie(c.Writer, cookie)
+}
+
+/*
+exp := time.Now().Add(7 * 24 * time.Hour)
+
+SetCookie(
+	c,
+	"refreshToken",
+	refreshToken,
+	exp,
+	int((7 * 24 * time.Hour).Seconds()),
+)
+*/

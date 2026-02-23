@@ -25,6 +25,9 @@ type Config struct {
 
 	PROCESS_INTERVAL time.Duration `mapstructure:"PROCESS_INTERVAL"`
 	DebugLv          int           `mapstructure:"DEBUG_LV"`
+
+	Env         time.Duration `mapstructure:"ENV"`
+	CookeDomain int           `mapstructure:"COOKIE_DOMAIN"`
 }
 
 func LoadConfig(path string) (Config, error) {

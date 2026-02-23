@@ -7,8 +7,11 @@ import (
 	"api-gateway/internal/logger"
 	"api-gateway/internal/memory"
 	"api-gateway/internal/service"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -100,7 +103,7 @@ func newRESTProxy(target string) *httputil.ReverseProxy {
 // 	return proxy
 // }
 
-func newSSEProxy(target string) *httputil.ReverseProxy {
+func (server *Server) newSSEProxy(target string) *httputil.ReverseProxy {
 	url, _ := url.Parse(target)
 	proxy := httputil.NewSingleHostReverseProxy(url)
 
@@ -127,9 +130,41 @@ func newSSEProxy(target string) *httputil.ReverseProxy {
 	return proxy
 }
 
-func newReverseProxy(target string) *httputil.ReverseProxy {
+// func (server *Server) newReverseProxy(target string, w http.ResponseWriter) *httputil.ReverseProxy {
+func (server *Server) newReverseProxy(target string, c *gin.Context) *httputil.ReverseProxy {
 	url, _ := url.Parse(target)
-	return httputil.NewSingleHostReverseProxy(url)
+	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		if resp.Request.URL.Path == "/login" && resp.StatusCode == http.StatusOK {
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+			resp.Body.Close()
+
+			var loginResp loginUserResponse
+			if err := json.Unmarshal(body, &loginResp); err != nil {
+				logger.Log.Error("[newReverseProxy] /login parse error: %v", err)
+			} else {
+				logger.Log.Print(2, "[newReverseProxy] /login caught")
+				logger.Log.Print(2, "\t ss:%s", loginResp.SessionID)
+				logger.Log.Print(2, "\t at:%s", loginResp.AcessToken)
+				logger.Log.Print(2, "\t ate:%s", loginResp.AccessTokenExpiresAt)
+				logger.Log.Print(2, "\t rt:%s", loginResp.RefreshToken)
+				logger.Log.Print(2, "\t rte:%s", loginResp.RefreshTokenExpiresAt)
+
+				server.SetCookie(c, "refresh_token", loginResp.RefreshToken, loginResp.RefreshTokenExpiresAt)
+			}
+
+			// Body 복원 (클라이언트에 그대로 전달)
+			resp.Body = io.NopCloser(bytes.NewBuffer(body))
+			resp.ContentLength = int64(len(body))
+		}
+		return nil
+	}
+
+	return proxy
 }
 
 func (server *Server) setupRouter() {
@@ -140,7 +175,7 @@ func (server *Server) setupRouter() {
 	router := gin.New()
 	addresses := strings.Split(server.config.AllowOrigins, ",")
 	router.Use(corsMiddleware(addresses))
-	// router.Use(authMiddleware(server.tokenMaker))
+	router.Use(authMiddleware(server.tokenMaker))
 
 	// gin.SetMode(gin.DebugMode)
 	// fmt.Printf("%v, \n", server.config.AllowOrigins)
@@ -151,8 +186,8 @@ func (server *Server) setupRouter() {
 	// prefix 단위 라우팅
 	router.Any("/auth/*proxyPath", func(c *gin.Context) {
 		addr := server.config.AUTH_SERVICE_URL
-		// proxy := newReverseProxy(serviceMap["/auth"])
-		proxy := newReverseProxy(addr)
+		// proxy := server.newReverseProxy(addr, c.Writer)
+		proxy := server.newReverseProxy(addr, c)
 		c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/auth")
 		logger.Log.Print(2, "auth path : %s", c.Request.URL.Path)
 		proxy.ServeHTTP(c.Writer, c.Request)
@@ -190,7 +225,7 @@ func (server *Server) setupRouter() {
 		rc := http.NewResponseController(c.Writer)
 		rc.SetWriteDeadline(time.Time{}) // deadline 제거
 
-		proxy := newSSEProxy(server.config.DOCKER_SERVICE_URL)
+		proxy := server.newSSEProxy(server.config.DOCKER_SERVICE_URL)
 		proxy.FlushInterval = -1
 		c.Request.URL.Path = strings.TrimPrefix(c.Request.URL.Path, "/docker-sse")
 		logger.Log.Print(2, "dockersse path : %s", c.Request.URL.Path)
