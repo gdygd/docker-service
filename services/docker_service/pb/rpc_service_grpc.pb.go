@@ -21,14 +21,18 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	HelloService_ConnMessage_FullMethodName = "/pb.HelloService/ConnMessage"
 	HelloService_DataStream_FullMethodName  = "/pb.HelloService/DataStream"
+	HelloService_LoginUser_FullMethodName   = "/pb.HelloService/LoginUser"
 )
 
 // HelloServiceClient is the client API for HelloService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HelloServiceClient interface {
+	// client stream
 	ConnMessage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Hello, Hello], error)
 	DataStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, ServerMessage], error)
+	// unary
+	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
 }
 
 type helloServiceClient struct {
@@ -65,12 +69,25 @@ func (c *helloServiceClient) DataStream(ctx context.Context, opts ...grpc.CallOp
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HelloService_DataStreamClient = grpc.BidiStreamingClient[AgentMessage, ServerMessage]
 
+func (c *helloServiceClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LoginUserResponse)
+	err := c.cc.Invoke(ctx, HelloService_LoginUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HelloServiceServer is the server API for HelloService service.
 // All implementations must embed UnimplementedHelloServiceServer
 // for forward compatibility.
 type HelloServiceServer interface {
+	// client stream
 	ConnMessage(grpc.BidiStreamingServer[Hello, Hello]) error
 	DataStream(grpc.BidiStreamingServer[AgentMessage, ServerMessage]) error
+	// unary
+	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
 	mustEmbedUnimplementedHelloServiceServer()
 }
 
@@ -86,6 +103,9 @@ func (UnimplementedHelloServiceServer) ConnMessage(grpc.BidiStreamingServer[Hell
 }
 func (UnimplementedHelloServiceServer) DataStream(grpc.BidiStreamingServer[AgentMessage, ServerMessage]) error {
 	return status.Error(codes.Unimplemented, "method DataStream not implemented")
+}
+func (UnimplementedHelloServiceServer) LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LoginUser not implemented")
 }
 func (UnimplementedHelloServiceServer) mustEmbedUnimplementedHelloServiceServer() {}
 func (UnimplementedHelloServiceServer) testEmbeddedByValue()                      {}
@@ -122,13 +142,36 @@ func _HelloService_DataStream_Handler(srv interface{}, stream grpc.ServerStream)
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HelloService_DataStreamServer = grpc.BidiStreamingServer[AgentMessage, ServerMessage]
 
+func _HelloService_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LoginUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HelloServiceServer).LoginUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HelloService_LoginUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HelloServiceServer).LoginUser(ctx, req.(*LoginUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HelloService_ServiceDesc is the grpc.ServiceDesc for HelloService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HelloService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "pb.HelloService",
 	HandlerType: (*HelloServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "LoginUser",
+			Handler:    _HelloService_LoginUser_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ConnMessage",

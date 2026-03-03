@@ -24,24 +24,29 @@ var File_rpc_service_proto protoreflect.FileDescriptor
 
 const file_rpc_service_proto_rawDesc = "" +
 	"\n" +
-	"\x11rpc_service.proto\x12\x02pb\x1a\x11rpc_message.proto\x1a\x14server_message.proto2n\n" +
+	"\x11rpc_service.proto\x12\x02pb\x1a\x11rpc_message.proto\x1a\x14server_message.proto\x1a\x12test_message.proto2\xa8\x01\n" +
 	"\fHelloService\x12'\n" +
 	"\vConnMessage\x12\t.pb.Hello\x1a\t.pb.Hello(\x010\x01\x125\n" +
 	"\n" +
-	"DataStream\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage(\x010\x01B\x13Z\x11docker_service/pbb\x06proto3"
+	"DataStream\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage(\x010\x01\x128\n" +
+	"\tLoginUser\x12\x14.pb.LoginUserRequest\x1a\x15.pb.LoginUserResponseB\x13Z\x11docker_service/pbb\x06proto3"
 
 var file_rpc_service_proto_goTypes = []any{
-	(*Hello)(nil),         // 0: pb.Hello
-	(*AgentMessage)(nil),  // 1: pb.AgentMessage
-	(*ServerMessage)(nil), // 2: pb.ServerMessage
+	(*Hello)(nil),             // 0: pb.Hello
+	(*AgentMessage)(nil),      // 1: pb.AgentMessage
+	(*LoginUserRequest)(nil),  // 2: pb.LoginUserRequest
+	(*ServerMessage)(nil),     // 3: pb.ServerMessage
+	(*LoginUserResponse)(nil), // 4: pb.LoginUserResponse
 }
 var file_rpc_service_proto_depIdxs = []int32{
 	0, // 0: pb.HelloService.ConnMessage:input_type -> pb.Hello
 	1, // 1: pb.HelloService.DataStream:input_type -> pb.AgentMessage
-	0, // 2: pb.HelloService.ConnMessage:output_type -> pb.Hello
-	2, // 3: pb.HelloService.DataStream:output_type -> pb.ServerMessage
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	2, // 2: pb.HelloService.LoginUser:input_type -> pb.LoginUserRequest
+	0, // 3: pb.HelloService.ConnMessage:output_type -> pb.Hello
+	3, // 4: pb.HelloService.DataStream:output_type -> pb.ServerMessage
+	4, // 5: pb.HelloService.LoginUser:output_type -> pb.LoginUserResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -54,6 +59,7 @@ func file_rpc_service_proto_init() {
 	}
 	file_rpc_message_proto_init()
 	file_server_message_proto_init()
+	file_test_message_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
