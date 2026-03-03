@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pb;
+
+
+option go_package = "docker_service/pb";
+
+enum CommandType {
+    ACK = 0;
+    START_CONTAINER = 1;
+    STOP_CONTAINER = 2;
+    RESTART_CONTAINER = 3;
+}
+
+message ServerMessage {
+    CommandType command = 1;
+    string target_container = 2;
+    string host = 3;
+}

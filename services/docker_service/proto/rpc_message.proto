@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package pb;
+
+import "container_message.proto";
+
+option go_package = "docker_service/pb";
+
+// message 정의
+message Hello {
+  string msg = 1;
+}
+
+message AgentMessage {
+    string agent_key = 1;
+    DataType type = 2;
+    string host = 3;
+    int64 timestamp = 4;
+    oneof data {
+        ContainerListData list_data = 10;
+        ContainerInspectData inspect_data = 11;
+        ContainerStatsData stats_data = 12;
+        ContainerEventData event_data = 13;
+    }
+}

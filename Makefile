@@ -14,7 +14,8 @@ APIGW_SERVICE_PATH = ./services/api-gateway
 build-all: build-api build-auth build-gw
 
 build-api:
-	cd $(SERVICE_PATH) && go build -o ./bin/docker-service ./cmd/main.go
+# 	cd $(SERVICE_PATH) && go build -o ./bin/docker-service ./cmd/main.go
+	cd $(SERVICE_PATH) && make build
 
 build-auth:
 	cd $(AUTH_SERVICE_PATH) && go build -o ./bin/auth-service ./cmd/main.go
@@ -61,6 +62,9 @@ allstop-port:
 	@fuser -k 9082/tcp 2>/dev/null || true
 	@fuser -k 9083/tcp 2>/dev/null || true
 	@echo "All services stopped"
+
+proto-agent:
+	cd $(SERVICE_PATH) && make proto
 
 # ---------------------------------
 # Test

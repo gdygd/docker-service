@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "docker_service/pb";
+
+enum DataType {
+    CONTAINER_LIST = 0;
+    CONTAINER_INSPECT = 1;
+    CONTAINER_STATS = 2;
+    CONTAINER_EVENT = 3;
+}
+
+message ContainerListData {
+    repeated ContainerInfo containers = 1;
+}
+
+message ContainerInfo {
+    string id = 1;
+    string name = 2;
+    string image = 3;
+    string state = 4;
+    string status = 5;
+}
+
+message ContainerStatsData {
+    repeated ContainerStats stats = 1;
+}
+
+message ContainerStats {
+    string id = 1;
+    string name = 2;
+    double cpu_percent = 3;
+    uint64 memory_usage = 4;
+    uint64 memory_limit = 5;
+    double memory_percent = 6;
+    uint64 network_rx = 7;
+    uint64 network_tx = 8;
+}
+
+message ContainerInspectData {
+    repeated ContainerInspect inspects = 1;
+}
+
+message ContainerInspect {
+    string id = 1;
+    string name = 2;
+    string image = 3;
+    string created = 4;
+    string platform = 5;
+    ContainerState state = 10;
+    ContainerConfig config = 11;
+    ContainerNetwork network = 12;
+    repeated MountPoint mounts = 13;
+}
+
+message ContainerState {
+    string status = 1;
+    bool running = 2;
+    bool paused = 3;
+    bool restarting = 4;
+    int32 exit_code = 5;
+    string started_at = 6;
+    string finished_at = 7;
+}
+
+message ContainerConfig {
+    string hostname = 1;
+    string user = 2;
+    repeated string env = 3;
+    repeated string cmd = 4;
+    repeated string entrypoint = 5;
+    string working_dir = 6;
+    map<string, string> labels = 7;
+}
+
+message ContainerNetwork {
+    string ip_address = 1;
+    string gateway = 2;
+    string mac_address = 3;
+    map<string, PortBindings> ports = 4;
+    map<string, NetworkEndpoint> networks = 5;
+}
+
+message PortBindings {
+    repeated PortBinding bindings = 1;
+}
+
+message PortBinding {
+    string host_ip = 1;
+    string host_port = 2;
+}
+
+message NetworkEndpoint {
+    string network_id = 1;
+    string ip_address = 2;
+    string gateway = 3;
+    string mac_address = 4;
+}
+
+message MountPoint {
+    string type = 1;
+    string name = 2;
+    string source = 3;
+    string destination = 4;
+    string mode = 5;
+    bool rw = 6;
+}
+
+message ContainerEventData {
+    string type = 1;       // container, network, image, volume
+    string action = 2;     // start, stop, die, create, destroy
+    string actor_id = 3;
+    string actor_name = 4;
+    int64 timestamp = 5;
+    map<string, string> attrs = 6;
+}

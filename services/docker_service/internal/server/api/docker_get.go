@@ -2,12 +2,11 @@ package api
 
 import (
 	"context"
+	"docker_service/internal/docker"
+	"docker_service/internal/logger"
 	"net/http"
 	"sync"
 	"time"
-
-	"docker_service/internal/docker"
-	"docker_service/internal/logger"
 
 	"github.com/gin-gonic/gin"
 )

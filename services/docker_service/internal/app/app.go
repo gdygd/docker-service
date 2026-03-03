@@ -5,6 +5,7 @@ import (
 	"docker_service/internal/logger"
 	"docker_service/internal/server/api"
 	"docker_service/internal/server/pipe"
+	gapi "docker_service/internal/server/rpc_client"
 	"sync"
 )
 
@@ -12,6 +13,7 @@ type Application struct {
 	wg         *sync.WaitGroup
 	ApiServer  *api.Server
 	PipeServer *pipe.Server
+	Gclient    *gapi.GrpcClient
 }
 
 func NewApplication(ct *container.Container, ch_terminate chan bool) *Application {
@@ -35,10 +37,14 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 		return nil
 	}
 
+	// init grpc client
+	gclient, _ := gapi.NewClient(wg, ct, ch_terminate)
+
 	return &Application{
 		wg:         wg,
 		ApiServer:  apisvr,
 		PipeServer: pipesvr,
+		Gclient:    gclient,
 	}
 }
 
@@ -52,6 +58,11 @@ func (app *Application) Start() {
 	app.wg.Add(1)
 	logger.Log.Print(3, "Start Pipe server..")
 	go app.PipeServer.Start()
+
+	// gRPC client 시작
+	app.wg.Add(1)
+	logger.Log.Print(3, "Start gRPC client..")
+	go app.Gclient.Start()
 }
 
 func (app *Application) Shutdown() {
@@ -61,6 +72,8 @@ func (app *Application) Shutdown() {
 	logger.Log.Print(3, "Shutdown API server..")
 	app.ApiServer.Shutdown()
 
+	logger.Log.Print(3, "Shutdown grpc client..")
+	go app.Gclient.Shutdown()
+
 	logger.Log.Print(3, "Shutdown complete")
 }
-

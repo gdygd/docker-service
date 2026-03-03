@@ -8,6 +8,8 @@ import (
 	"docker_service/internal/logger"
 	"docker_service/internal/memory"
 	"fmt"
+
+	"github.com/gdygd/goglib/databus"
 )
 
 type Container struct {
@@ -16,6 +18,8 @@ type Container struct {
 	ObjDb     *memory.RedisDb
 	Docker    *docker.Client
 	DockerMng *docker.DockerClientManager
+
+	Bus *databus.DataBus
 }
 
 var container *Container
@@ -67,6 +71,9 @@ func NewContainer() (*Container, error) {
 		logger.Log.Error("init docker client error..(%v)", err)
 	}
 	container.DockerMng = dockerMng
+
+	// init databus
+	container.Bus = databus.NewDataBus()
 
 	return container, nil
 }

@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+
+
+option go_package = "docker_service/pb";
+
+import "rpc_message.proto";
+import "server_message.proto";
+
+service HelloService{
+    rpc ConnMessage(stream Hello) returns (stream Hello);
+    rpc DataStream(stream AgentMessage) returns (stream ServerMessage);
+}
