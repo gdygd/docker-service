@@ -122,20 +122,20 @@ func (s *Server) handleMessage(msg pipeline.Message) {
 	default:
 		logger.Log.Warn("[PipeServer] sendCh full, drop msg")
 		// 버퍼 full - 오래된 데이터 제거 후 추가
-		select {
-		case dropped := <-s.sendCh:
-			logger.Log.Print(1, "[PipeServer] sendCh full, dropped old message: type=%s host=%s",
-				dropped.Type, dropped.Host)
-		default:
+		// select {
+		// case dropped := <-s.sendCh:
+		// 	logger.Log.Print(1, "[PipeServer] sendCh full, dropped old message: type=%s host=%s",
+		// 		dropped.Type, dropped.Host)
+		// default:
 
-		}
+		// }
 
-		// 새 메시지 추가
-		select {
-		case s.sendCh <- msg:
-		default:
-			logger.Log.Error("[PipeServer] failed to send message after drop")
-		}
+		// // 새 메시지 추가
+		// select {
+		// case s.sendCh <- msg:
+		// default:
+		// 	logger.Log.Error("[PipeServer] failed to send message after drop")
+		// }
 	}
 }
 

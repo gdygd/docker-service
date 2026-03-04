@@ -12,168 +12,230 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
 type GrpcClient struct {
-	wg     *sync.WaitGroup // app에서 관리하는 wg
-	txrxwg sync.WaitGroup  // tx, rx routine group
+	wg     *sync.WaitGroup
 	conn   *grpc.ClientConn
-	stream pb.ContainerService_ConnMessageClient
-	ctx    context.Context // master context
+	stream pb.ContainerService_DataStreamClient
+	ctx    context.Context
 	cancel context.CancelFunc
 	mu     sync.RWMutex
 
-	ct     *container.Container
-	pipeCh chan pipeline.Message
+	addr     string
+	agentKey string
+	ct       *container.Container
+	pipeCh   <-chan pipeline.Message
 }
 
-func NewClient(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bool, pipeCh chan pipeline.Message) (*GrpcClient, error) {
+func NewClient(
+	wg *sync.WaitGroup,
+	ct *container.Container,
+	pipeCh <-chan pipeline.Message,
+	addr string,
+	agentKey string,
+) (*GrpcClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	gclient := &GrpcClient{
-		wg:     wg,
-		ctx:    ctx,
-		cancel: cancel,
-		ct:     ct,
+	c := &GrpcClient{
+		wg:       wg,
+		ctx:      ctx,
+		cancel:   cancel,
+		ct:       ct,
+		pipeCh:   pipeCh,
+		addr:     addr,
+		agentKey: agentKey,
 	}
 
-	err := gclient.Connect()
-	if err != nil {
-		return gclient, err
+	if err := c.connect(); err != nil {
+		cancel()
+		return nil, err
+	}
+	if err := c.createStream(); err != nil {
+		cancel()
+		return nil, err
 	}
 
-	err = gclient.CreateStream()
-	if err != nil {
-		return gclient, err
-	}
-
-	return gclient, nil
+	return c, nil
 }
 
-func (c *GrpcClient) Connect() error {
+func (c *GrpcClient) connect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	logger.Log.Print(2, "Connect...#1")
-
-	opts := []grpc.DialOption{
+	conn, err := grpc.NewClient(
+		c.addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	}
-
-	conn, err := grpc.NewClient("localhost:9190", opts...)
-	c.conn = conn
+		grpc.WithUnaryInterceptor(c.agentKeyUnaryInterceptor()),
+		grpc.WithStreamInterceptor(c.agentKeyStreamInterceptor()),
+	)
 	if err != nil {
-		logger.Log.Error("Failed to connect: %v", err)
-		return err
+		return fmt.Errorf("grpc.NewClient(%s): %w", c.addr, err)
 	}
 
-	logger.Log.Print(2, "Connect...#2")
-
+	if c.conn != nil {
+		_ = c.conn.Close()
+	}
+	c.conn = conn
 	return nil
 }
 
-func (c *GrpcClient) CreateStream() error {
+func (c *GrpcClient) agentKeyUnaryInterceptor() grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		ctx = metadata.AppendToOutgoingContext(ctx, "agent-key", c.agentKey)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
+
+func (c *GrpcClient) agentKeyStreamInterceptor() grpc.StreamClientInterceptor {
+	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+		ctx = metadata.AppendToOutgoingContext(ctx, "agent-key", c.agentKey)
+		return streamer(ctx, desc, cc, method, opts...)
+	}
+}
+
+func (c *GrpcClient) createStream() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	logger.Log.Print(2, "CreateStream...#1")
-
-	c.stream = nil
-
 	if c.conn == nil {
-		return fmt.Errorf("conn is nil..")
+		return fmt.Errorf("conn is nil")
 	}
-	client := pb.NewContainerServiceClient(c.conn)
-	stream, err := client.ConnMessage(context.Background())
+
+	stream, err := pb.NewContainerServiceClient(c.conn).DataStream(c.ctx)
 	if err != nil {
-		logger.Log.Error("Error creating stream.. %v", err)
-		return err
+		return fmt.Errorf("DataStream: %w", err)
 	}
 
 	c.stream = stream
 	return nil
 }
 
+func (c *GrpcClient) resetStream() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.stream = nil
+}
+
+func (c *GrpcClient) getStream() pb.ContainerService_DataStreamClient {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.stream
+}
+
+func (c *GrpcClient) getConnState() connectivity.State {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.conn == nil {
+		return connectivity.Shutdown
+	}
+	return c.conn.GetState()
+}
+
 func (c *GrpcClient) Start() {
 	defer c.wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("THRclient panic: %v \n", r)
+			log.Printf("GrpcClient panic: %v", r)
 		}
 	}()
-	txrxCtx, txrxCancel := context.WithCancel(c.ctx) // master ctx로 하위 루틴 컨텍스트 생성
 
-	var mu sync.Mutex
-	var txRunning, rxRunning, connRunning bool // 실행상태 체크
+	txrxCtx, txrxCancel := context.WithCancel(c.ctx)
+	defer txrxCancel()
+
+	var stateMu sync.Mutex
+	var txRunning, rxRunning, connRunning bool
+
 	txDone := make(chan struct{}, 1)
 	rxDone := make(chan struct{}, 1)
-	connectDone := make(chan struct{}, 1)
+	connDone := make(chan struct{}, 1)
 
-	// 최초 시작
-	c.startTxRoutine(txrxCtx, &mu, &txRunning, txDone)
-	c.startRxRoutine(txrxCtx, &mu, &rxRunning, rxDone)
-	c.startManageConnect(txrxCtx, &mu, &connRunning, connectDone)
+	launch := func(running *bool, done chan struct{}, name string, fn func(context.Context)) {
+		stateMu.Lock()
+		defer stateMu.Unlock()
+		if *running {
+			return
+		}
+		*running = true
+		go func() {
+			defer func() {
+				stateMu.Lock()
+				*running = false
+				stateMu.Unlock()
+				done <- struct{}{}
+			}()
+			logger.Log.Print(2, "[%s] started", name)
+			fn(txrxCtx)
+			logger.Log.Print(2, "[%s] exited", name)
+		}()
+	}
 
-	// check routine
+	launch(&connRunning, connDone, "manageConnect", c.manageConnect)
+	launch(&txRunning, txDone, "txRoutine", c.txRoutine)
+	launch(&rxRunning, rxDone, "rxRoutine", c.rxRoutine)
+
 	for {
 		select {
 		case <-c.ctx.Done():
-			logger.Log.Print(2, "grpc client master context canceled..")
+			logger.Log.Print(2, "gRPC client shutting down..")
 			txrxCancel()
 			goto WAIT
-		case <-txDone: // Manage txRoutine
-			logger.Log.Warn("Tx routine ended..")
+
+		case <-txDone:
+			logger.Log.Warn("txRoutine exited")
 			if c.ctx.Err() == nil {
-				c.startTxRoutine(txrxCtx, &mu, &txRunning, txDone)
+				launch(&txRunning, txDone, "txRoutine", c.txRoutine)
 			}
-		case <-rxDone: // Manage rxRoutine
-			logger.Log.Warn("Rx routine ended..")
+
+		case <-rxDone:
+			logger.Log.Warn("rxRoutine exited")
 			if c.ctx.Err() == nil {
-				c.startRxRoutine(txrxCtx, &mu, &rxRunning, rxDone)
+				launch(&rxRunning, rxDone, "rxRoutine", c.rxRoutine)
 			}
-		case <-connectDone:
-			logger.Log.Warn("Connect routine ended..")
+
+		case <-connDone:
+			logger.Log.Warn("manageConnect exited")
 			if c.ctx.Err() == nil {
-				c.startManageConnect(txrxCtx, &mu, &connRunning, connectDone)
+				launch(&connRunning, connDone, "manageConnect", c.manageConnect)
 			}
-		default:
-			time.Sleep(time.Second * 1)
 		}
 	}
+
 WAIT:
-	done := make(chan struct{})
+	stopped := make(chan struct{})
 	go func() {
 		for {
-			mu.Lock()
-			if !txRunning && !rxRunning && !connRunning {
-				mu.Unlock()
-				break
+			stateMu.Lock()
+			done := !txRunning && !rxRunning && !connRunning
+			stateMu.Unlock()
+			if done {
+				close(stopped)
+				return
 			}
-			mu.Unlock()
-			time.Sleep(time.Second * 1)
+			time.Sleep(100 * time.Millisecond)
 		}
-		close(connectDone)
 	}()
 
 	select {
-	case <-done:
-		log.Printf("Graceful shutdown !")
-	case <-time.After(time.Second * 5):
-		log.Printf("Graceful shutdown timeout.. client...")
+	case <-stopped:
+		logger.Log.Print(2, "Graceful shutdown complete")
+	case <-time.After(5 * time.Second):
+		logger.Log.Warn("Graceful shutdown timeout")
 	}
 
-	logger.Log.Print(2, "gRPC Client quit..")
+	c.mu.Lock()
+	if c.conn != nil {
+		_ = c.conn.Close()
+		c.conn = nil
+	}
+	c.mu.Unlock()
+
+	logger.Log.Print(2, "gRPC Client quit")
 }
 
 func (c *GrpcClient) Shutdown() {
-	logger.Log.Print(2, "Shutdown grpc client..")
-
-	// c.conn.Close()
-
-	c.cancel() // 종료  시그널
-	c.txrxwg.Wait()
-
-	logger.Log.Print(2, "Tx/Rx routine finished.")
-	// <-c.ctx.Done()
-	logger.Log.Print(2, "gRPC client Shutdown finished.")
+	logger.Log.Print(2, "Shutting down gRPC client..")
+	c.cancel()
 }

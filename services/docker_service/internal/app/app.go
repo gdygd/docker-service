@@ -43,7 +43,8 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 	}
 
 	// init grpc client
-	gclient, _ := gapi.NewClient(wg, ct, ch_terminate, pipeCh)
+	// gclient, _ := gapi.NewClient(wg, ct, ch_terminate, pipeCh)
+	gclient, _ := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
 
 	return &Application{
 		wg:         wg,
