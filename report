@@ -1,0 +1,8 @@
+~26.03.03
+-local container기반 서비스 완료
+-pipe로 컨테이너 정보 수집
+-gRPC 메세지 전송 테스트
+-gRPC client 메타 인터셉터 추가 (agent-key)
+
+26.03.04
+-pipe 채널 full 관리(오래된 메시지 drop)
