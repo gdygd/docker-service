@@ -16,6 +16,7 @@ type Server struct {
 	wg      *sync.WaitGroup
 	manager *collector.Manager
 	config  Config
+	sendCh  chan<- pipeline.Message // write only
 }
 
 // Config Pipeline 서버 설정
@@ -33,7 +34,7 @@ func DefaultConfig() Config {
 }
 
 // NewServer Pipeline 서버 생성
-func NewServer(wg *sync.WaitGroup, dockerMng *docker.DockerClientManager, cfg Config) (*Server, error) {
+func NewServer(wg *sync.WaitGroup, dockerMng *docker.DockerClientManager, cfg Config, pipeCh chan pipeline.Message) (*Server, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Manager 생성
@@ -59,6 +60,7 @@ func NewServer(wg *sync.WaitGroup, dockerMng *docker.DockerClientManager, cfg Co
 		wg:      wg,
 		manager: manager,
 		config:  cfg,
+		sendCh:  pipeCh,
 	}, nil
 }
 
@@ -108,11 +110,32 @@ func (s *Server) handleMessage(msg pipeline.Message) {
 	logger.Log.Print(1, "[PipeServer] type=%s host=%s timestamp=%v",
 		msg.Type, msg.Host, msg.Timestamp)
 
-	switch msg.Type {
-	case pipeline.DataTypeList:
-		s.handleListMessage(msg)
-	case pipeline.DataTypeInspect:
-		s.handleInspectMessage(msg)
+	// switch msg.Type {
+	// case pipeline.DataTypeList:
+	// 	s.handleListMessage(msg)
+	// case pipeline.DataTypeInspect:
+	// 	s.handleInspectMessage(msg)
+	// }
+	select {
+	case s.sendCh <- msg:
+	case <-s.ctx.Done():
+	default:
+		logger.Log.Warn("[PipeServer] sendCh full, drop msg")
+		// 버퍼 full - 오래된 데이터 제거 후 추가
+		select {
+		case dropped := <-s.sendCh:
+			logger.Log.Print(1, "[PipeServer] sendCh full, dropped old message: type=%s host=%s",
+				dropped.Type, dropped.Host)
+		default:
+
+		}
+
+		// 새 메시지 추가
+		select {
+		case s.sendCh <- msg:
+		default:
+			logger.Log.Error("[PipeServer] failed to send message after drop")
+		}
 	}
 }
 

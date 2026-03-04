@@ -10,11 +10,13 @@ import "rpc_message.proto";
 import "server_message.proto";
 import "test_message.proto";
 
-service HelloService{
+service ContainerService{
     // client stream
     rpc ConnMessage(stream Hello) returns (stream Hello);
     rpc DataStream(stream AgentMessage) returns (stream ServerMessage);
+    
 
     // unary
     rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
+    rpc ContainerState(AgentMessage) returns (ServerMessage);
 }

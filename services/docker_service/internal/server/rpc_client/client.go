@@ -4,6 +4,7 @@ import (
 	"context"
 	"docker_service/internal/container"
 	"docker_service/internal/logger"
+	"docker_service/internal/pipeline"
 	"docker_service/pb"
 	"fmt"
 	"log"
@@ -18,15 +19,16 @@ type GrpcClient struct {
 	wg     *sync.WaitGroup // app에서 관리하는 wg
 	txrxwg sync.WaitGroup  // tx, rx routine group
 	conn   *grpc.ClientConn
-	stream pb.HelloService_ConnMessageClient
+	stream pb.ContainerService_ConnMessageClient
 	ctx    context.Context // master context
 	cancel context.CancelFunc
 	mu     sync.RWMutex
 
-	ct *container.Container
+	ct     *container.Container
+	pipeCh chan pipeline.Message
 }
 
-func NewClient(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bool) (*GrpcClient, error) {
+func NewClient(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bool, pipeCh chan pipeline.Message) (*GrpcClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	gclient := &GrpcClient{
 		wg:     wg,
@@ -81,7 +83,7 @@ func (c *GrpcClient) CreateStream() error {
 	if c.conn == nil {
 		return fmt.Errorf("conn is nil..")
 	}
-	client := pb.NewHelloServiceClient(c.conn)
+	client := pb.NewContainerServiceClient(c.conn)
 	stream, err := client.ConnMessage(context.Background())
 	if err != nil {
 		logger.Log.Error("Error creating stream.. %v", err)

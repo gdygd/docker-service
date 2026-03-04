@@ -19,33 +19,35 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	HelloService_ConnMessage_FullMethodName = "/pb.HelloService/ConnMessage"
-	HelloService_DataStream_FullMethodName  = "/pb.HelloService/DataStream"
-	HelloService_LoginUser_FullMethodName   = "/pb.HelloService/LoginUser"
+	ContainerService_ConnMessage_FullMethodName    = "/pb.ContainerService/ConnMessage"
+	ContainerService_DataStream_FullMethodName     = "/pb.ContainerService/DataStream"
+	ContainerService_LoginUser_FullMethodName      = "/pb.ContainerService/LoginUser"
+	ContainerService_ContainerState_FullMethodName = "/pb.ContainerService/ContainerState"
 )
 
-// HelloServiceClient is the client API for HelloService service.
+// ContainerServiceClient is the client API for ContainerService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type HelloServiceClient interface {
+type ContainerServiceClient interface {
 	// client stream
 	ConnMessage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Hello, Hello], error)
 	DataStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, ServerMessage], error)
 	// unary
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
+	ContainerState(ctx context.Context, in *AgentMessage, opts ...grpc.CallOption) (*ServerMessage, error)
 }
 
-type helloServiceClient struct {
+type containerServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewHelloServiceClient(cc grpc.ClientConnInterface) HelloServiceClient {
-	return &helloServiceClient{cc}
+func NewContainerServiceClient(cc grpc.ClientConnInterface) ContainerServiceClient {
+	return &containerServiceClient{cc}
 }
 
-func (c *helloServiceClient) ConnMessage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Hello, Hello], error) {
+func (c *containerServiceClient) ConnMessage(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[Hello, Hello], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &HelloService_ServiceDesc.Streams[0], HelloService_ConnMessage_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[0], ContainerService_ConnMessage_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -54,11 +56,11 @@ func (c *helloServiceClient) ConnMessage(ctx context.Context, opts ...grpc.CallO
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type HelloService_ConnMessageClient = grpc.BidiStreamingClient[Hello, Hello]
+type ContainerService_ConnMessageClient = grpc.BidiStreamingClient[Hello, Hello]
 
-func (c *helloServiceClient) DataStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, ServerMessage], error) {
+func (c *containerServiceClient) DataStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[AgentMessage, ServerMessage], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &HelloService_ServiceDesc.Streams[1], HelloService_DataStream_FullMethodName, cOpts...)
+	stream, err := c.cc.NewStream(ctx, &ContainerService_ServiceDesc.Streams[1], ContainerService_DataStream_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,121 +69,157 @@ func (c *helloServiceClient) DataStream(ctx context.Context, opts ...grpc.CallOp
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type HelloService_DataStreamClient = grpc.BidiStreamingClient[AgentMessage, ServerMessage]
+type ContainerService_DataStreamClient = grpc.BidiStreamingClient[AgentMessage, ServerMessage]
 
-func (c *helloServiceClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error) {
+func (c *containerServiceClient) LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginUserResponse)
-	err := c.cc.Invoke(ctx, HelloService_LoginUser_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, ContainerService_LoginUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// HelloServiceServer is the server API for HelloService service.
-// All implementations must embed UnimplementedHelloServiceServer
+func (c *containerServiceClient) ContainerState(ctx context.Context, in *AgentMessage, opts ...grpc.CallOption) (*ServerMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerMessage)
+	err := c.cc.Invoke(ctx, ContainerService_ContainerState_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ContainerServiceServer is the server API for ContainerService service.
+// All implementations must embed UnimplementedContainerServiceServer
 // for forward compatibility.
-type HelloServiceServer interface {
+type ContainerServiceServer interface {
 	// client stream
 	ConnMessage(grpc.BidiStreamingServer[Hello, Hello]) error
 	DataStream(grpc.BidiStreamingServer[AgentMessage, ServerMessage]) error
 	// unary
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
-	mustEmbedUnimplementedHelloServiceServer()
+	ContainerState(context.Context, *AgentMessage) (*ServerMessage, error)
+	mustEmbedUnimplementedContainerServiceServer()
 }
 
-// UnimplementedHelloServiceServer must be embedded to have
+// UnimplementedContainerServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedHelloServiceServer struct{}
+type UnimplementedContainerServiceServer struct{}
 
-func (UnimplementedHelloServiceServer) ConnMessage(grpc.BidiStreamingServer[Hello, Hello]) error {
+func (UnimplementedContainerServiceServer) ConnMessage(grpc.BidiStreamingServer[Hello, Hello]) error {
 	return status.Error(codes.Unimplemented, "method ConnMessage not implemented")
 }
-func (UnimplementedHelloServiceServer) DataStream(grpc.BidiStreamingServer[AgentMessage, ServerMessage]) error {
+func (UnimplementedContainerServiceServer) DataStream(grpc.BidiStreamingServer[AgentMessage, ServerMessage]) error {
 	return status.Error(codes.Unimplemented, "method DataStream not implemented")
 }
-func (UnimplementedHelloServiceServer) LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error) {
+func (UnimplementedContainerServiceServer) LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method LoginUser not implemented")
 }
-func (UnimplementedHelloServiceServer) mustEmbedUnimplementedHelloServiceServer() {}
-func (UnimplementedHelloServiceServer) testEmbeddedByValue()                      {}
+func (UnimplementedContainerServiceServer) ContainerState(context.Context, *AgentMessage) (*ServerMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method ContainerState not implemented")
+}
+func (UnimplementedContainerServiceServer) mustEmbedUnimplementedContainerServiceServer() {}
+func (UnimplementedContainerServiceServer) testEmbeddedByValue()                          {}
 
-// UnsafeHelloServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to HelloServiceServer will
+// UnsafeContainerServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ContainerServiceServer will
 // result in compilation errors.
-type UnsafeHelloServiceServer interface {
-	mustEmbedUnimplementedHelloServiceServer()
+type UnsafeContainerServiceServer interface {
+	mustEmbedUnimplementedContainerServiceServer()
 }
 
-func RegisterHelloServiceServer(s grpc.ServiceRegistrar, srv HelloServiceServer) {
-	// If the following call panics, it indicates UnimplementedHelloServiceServer was
+func RegisterContainerServiceServer(s grpc.ServiceRegistrar, srv ContainerServiceServer) {
+	// If the following call panics, it indicates UnimplementedContainerServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&HelloService_ServiceDesc, srv)
+	s.RegisterService(&ContainerService_ServiceDesc, srv)
 }
 
-func _HelloService_ConnMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(HelloServiceServer).ConnMessage(&grpc.GenericServerStream[Hello, Hello]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type HelloService_ConnMessageServer = grpc.BidiStreamingServer[Hello, Hello]
-
-func _HelloService_DataStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(HelloServiceServer).DataStream(&grpc.GenericServerStream[AgentMessage, ServerMessage]{ServerStream: stream})
+func _ContainerService_ConnMessage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContainerServiceServer).ConnMessage(&grpc.GenericServerStream[Hello, Hello]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type HelloService_DataStreamServer = grpc.BidiStreamingServer[AgentMessage, ServerMessage]
+type ContainerService_ConnMessageServer = grpc.BidiStreamingServer[Hello, Hello]
 
-func _HelloService_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ContainerService_DataStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ContainerServiceServer).DataStream(&grpc.GenericServerStream[AgentMessage, ServerMessage]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ContainerService_DataStreamServer = grpc.BidiStreamingServer[AgentMessage, ServerMessage]
+
+func _ContainerService_LoginUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(HelloServiceServer).LoginUser(ctx, in)
+		return srv.(ContainerServiceServer).LoginUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: HelloService_LoginUser_FullMethodName,
+		FullMethod: ContainerService_LoginUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HelloServiceServer).LoginUser(ctx, req.(*LoginUserRequest))
+		return srv.(ContainerServiceServer).LoginUser(ctx, req.(*LoginUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// HelloService_ServiceDesc is the grpc.ServiceDesc for HelloService service.
+func _ContainerService_ContainerState_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AgentMessage)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).ContainerState(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_ContainerState_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).ContainerState(ctx, req.(*AgentMessage))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ContainerService_ServiceDesc is the grpc.ServiceDesc for ContainerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var HelloService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.HelloService",
-	HandlerType: (*HelloServiceServer)(nil),
+var ContainerService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.ContainerService",
+	HandlerType: (*ContainerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "LoginUser",
-			Handler:    _HelloService_LoginUser_Handler,
+			Handler:    _ContainerService_LoginUser_Handler,
+		},
+		{
+			MethodName: "ContainerState",
+			Handler:    _ContainerService_ContainerState_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ConnMessage",
-			Handler:       _HelloService_ConnMessage_Handler,
+			Handler:       _ContainerService_ConnMessage_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "DataStream",
-			Handler:       _HelloService_DataStream_Handler,
+			Handler:       _ContainerService_DataStream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
