@@ -6,3 +6,6 @@
 
 26.03.04
 -pipe 채널 full 관리(오래된 메시지 drop)
+
+26.03.05
+-rpc 서비스 추가(list, inspcet, stats, event 각각 추가함)

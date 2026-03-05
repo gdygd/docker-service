@@ -118,6 +118,13 @@ func (c *GrpcClient) sendUnary(msg pipeline.Message) {
 		return
 	}
 
+	switch msg.Type {
+	case pipeline.DataTypeList, pipeline.DataTypeInspect,
+		pipeline.DataTypeStats, pipeline.DataTypeEvent:
+	default:
+		logger.Log.Print(2, "[sendUnary] unknown message type: %s", msg.Type)
+	}
+
 	resp, err := c.ContainerState(pbMsg)
 	if err != nil {
 		logger.Log.Error("[sendUnary] ContainerState error: %v", err)

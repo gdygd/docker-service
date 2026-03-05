@@ -19,10 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ContainerService_ConnMessage_FullMethodName    = "/pb.ContainerService/ConnMessage"
-	ContainerService_DataStream_FullMethodName     = "/pb.ContainerService/DataStream"
-	ContainerService_LoginUser_FullMethodName      = "/pb.ContainerService/LoginUser"
-	ContainerService_ContainerState_FullMethodName = "/pb.ContainerService/ContainerState"
+	ContainerService_ConnMessage_FullMethodName      = "/pb.ContainerService/ConnMessage"
+	ContainerService_DataStream_FullMethodName       = "/pb.ContainerService/DataStream"
+	ContainerService_LoginUser_FullMethodName        = "/pb.ContainerService/LoginUser"
+	ContainerService_ContainerState_FullMethodName   = "/pb.ContainerService/ContainerState"
+	ContainerService_ContainerInfo_FullMethodName    = "/pb.ContainerService/ContainerInfo"
+	ContainerService_ContainerInspect_FullMethodName = "/pb.ContainerService/ContainerInspect"
+	ContainerService_ContainerStats_FullMethodName   = "/pb.ContainerService/ContainerStats"
+	ContainerService_ContainerEvent_FullMethodName   = "/pb.ContainerService/ContainerEvent"
 )
 
 // ContainerServiceClient is the client API for ContainerService service.
@@ -35,6 +39,10 @@ type ContainerServiceClient interface {
 	// unary
 	LoginUser(ctx context.Context, in *LoginUserRequest, opts ...grpc.CallOption) (*LoginUserResponse, error)
 	ContainerState(ctx context.Context, in *AgentMessage, opts ...grpc.CallOption) (*ServerMessage, error)
+	ContainerInfo(ctx context.Context, in *ContainerListData, opts ...grpc.CallOption) (*ServerMessage, error)
+	ContainerInspect(ctx context.Context, in *ContainerInspectData, opts ...grpc.CallOption) (*ServerMessage, error)
+	ContainerStats(ctx context.Context, in *ContainerStatsData, opts ...grpc.CallOption) (*ServerMessage, error)
+	ContainerEvent(ctx context.Context, in *ContainerEventData, opts ...grpc.CallOption) (*ServerMessage, error)
 }
 
 type containerServiceClient struct {
@@ -91,6 +99,46 @@ func (c *containerServiceClient) ContainerState(ctx context.Context, in *AgentMe
 	return out, nil
 }
 
+func (c *containerServiceClient) ContainerInfo(ctx context.Context, in *ContainerListData, opts ...grpc.CallOption) (*ServerMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerMessage)
+	err := c.cc.Invoke(ctx, ContainerService_ContainerInfo_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) ContainerInspect(ctx context.Context, in *ContainerInspectData, opts ...grpc.CallOption) (*ServerMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerMessage)
+	err := c.cc.Invoke(ctx, ContainerService_ContainerInspect_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) ContainerStats(ctx context.Context, in *ContainerStatsData, opts ...grpc.CallOption) (*ServerMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerMessage)
+	err := c.cc.Invoke(ctx, ContainerService_ContainerStats_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *containerServiceClient) ContainerEvent(ctx context.Context, in *ContainerEventData, opts ...grpc.CallOption) (*ServerMessage, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ServerMessage)
+	err := c.cc.Invoke(ctx, ContainerService_ContainerEvent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ContainerServiceServer is the server API for ContainerService service.
 // All implementations must embed UnimplementedContainerServiceServer
 // for forward compatibility.
@@ -101,6 +149,10 @@ type ContainerServiceServer interface {
 	// unary
 	LoginUser(context.Context, *LoginUserRequest) (*LoginUserResponse, error)
 	ContainerState(context.Context, *AgentMessage) (*ServerMessage, error)
+	ContainerInfo(context.Context, *ContainerListData) (*ServerMessage, error)
+	ContainerInspect(context.Context, *ContainerInspectData) (*ServerMessage, error)
+	ContainerStats(context.Context, *ContainerStatsData) (*ServerMessage, error)
+	ContainerEvent(context.Context, *ContainerEventData) (*ServerMessage, error)
 	mustEmbedUnimplementedContainerServiceServer()
 }
 
@@ -122,6 +174,18 @@ func (UnimplementedContainerServiceServer) LoginUser(context.Context, *LoginUser
 }
 func (UnimplementedContainerServiceServer) ContainerState(context.Context, *AgentMessage) (*ServerMessage, error) {
 	return nil, status.Error(codes.Unimplemented, "method ContainerState not implemented")
+}
+func (UnimplementedContainerServiceServer) ContainerInfo(context.Context, *ContainerListData) (*ServerMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method ContainerInfo not implemented")
+}
+func (UnimplementedContainerServiceServer) ContainerInspect(context.Context, *ContainerInspectData) (*ServerMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method ContainerInspect not implemented")
+}
+func (UnimplementedContainerServiceServer) ContainerStats(context.Context, *ContainerStatsData) (*ServerMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method ContainerStats not implemented")
+}
+func (UnimplementedContainerServiceServer) ContainerEvent(context.Context, *ContainerEventData) (*ServerMessage, error) {
+	return nil, status.Error(codes.Unimplemented, "method ContainerEvent not implemented")
 }
 func (UnimplementedContainerServiceServer) mustEmbedUnimplementedContainerServiceServer() {}
 func (UnimplementedContainerServiceServer) testEmbeddedByValue()                          {}
@@ -194,6 +258,78 @@ func _ContainerService_ContainerState_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ContainerService_ContainerInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainerListData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).ContainerInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_ContainerInfo_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).ContainerInfo(ctx, req.(*ContainerListData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_ContainerInspect_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainerInspectData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).ContainerInspect(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_ContainerInspect_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).ContainerInspect(ctx, req.(*ContainerInspectData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_ContainerStats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainerStatsData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).ContainerStats(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_ContainerStats_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).ContainerStats(ctx, req.(*ContainerStatsData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ContainerService_ContainerEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContainerEventData)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ContainerServiceServer).ContainerEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ContainerService_ContainerEvent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ContainerServiceServer).ContainerEvent(ctx, req.(*ContainerEventData))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ContainerService_ServiceDesc is the grpc.ServiceDesc for ContainerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -208,6 +344,22 @@ var ContainerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ContainerState",
 			Handler:    _ContainerService_ContainerState_Handler,
+		},
+		{
+			MethodName: "ContainerInfo",
+			Handler:    _ContainerService_ContainerInfo_Handler,
+		},
+		{
+			MethodName: "ContainerInspect",
+			Handler:    _ContainerService_ContainerInspect_Handler,
+		},
+		{
+			MethodName: "ContainerStats",
+			Handler:    _ContainerService_ContainerStats_Handler,
+		},
+		{
+			MethodName: "ContainerEvent",
+			Handler:    _ContainerService_ContainerEvent_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
