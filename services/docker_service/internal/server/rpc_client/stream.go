@@ -68,10 +68,13 @@ func (c *GrpcClient) txRoutine(ctx context.Context) {
 
 			switch msg.Type {
 			// case pipeline.DataTypeList, pipeline.DataTypeStats, pipeline.DataTypeEvent:
-			case pipeline.DataTypeList:
-				c.sendStream(msg) // 실시간 스트리밍
-			// case pipeline.DataTypeInspect:
-			// 	c.sendUnary(msg) // 단발성 스냅샷
+			// case pipeline.DataTypeList:
+			// 	c.sendStream(msg) // 실시간 스트리밍
+			case pipeline.DataTypeList,
+				pipeline.DataTypeInspect,
+				pipeline.DataTypeStats,
+				pipeline.DataTypeEvent:
+				c.sendUnary(msg) // 단발성 스냅샷
 			default:
 				logger.Log.Warn("[txRoutine] unknown message type: %s", msg.Type)
 			}
@@ -117,15 +120,23 @@ func (c *GrpcClient) sendUnary(msg pipeline.Message) {
 		logger.Log.Error("[sendUnary] convert failed: %v", err)
 		return
 	}
+	resp := &pb.ServerMessage{}
 
 	switch msg.Type {
-	case pipeline.DataTypeList, pipeline.DataTypeInspect,
-		pipeline.DataTypeStats, pipeline.DataTypeEvent:
+	case pipeline.DataTypeList:
+		resp, err = c.ContainerInfo(pbMsg)
+	case pipeline.DataTypeInspect:
+		resp, err = c.ContainerInspect(pbMsg)
+	case pipeline.DataTypeStats:
+		resp, err = c.ContainerStats(pbMsg)
+	case pipeline.DataTypeEvent:
+		resp, err = c.ContainerEvent(pbMsg)
+
 	default:
 		logger.Log.Print(2, "[sendUnary] unknown message type: %s", msg.Type)
 	}
 
-	resp, err := c.ContainerState(pbMsg)
+	// resp, err = c.ContainerState(pbMsg)
 	if err != nil {
 		logger.Log.Error("[sendUnary] ContainerState error: %v", err)
 		return

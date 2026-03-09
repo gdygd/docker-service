@@ -9,3 +9,10 @@
 
 26.03.05
 -rpc 서비스 추가(list, inspcet, stats, event 각각 추가함)
+
+
+26.03.09
+-grpc, NewClient함수 수정 
+ > 스트림 생성 분리
+- app.go에서 grpc client 초기화시 nil 처리
+- stats 전송 (pipe에서 빠져있었음)

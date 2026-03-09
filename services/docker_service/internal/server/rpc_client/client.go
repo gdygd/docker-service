@@ -31,13 +31,7 @@ type GrpcClient struct {
 	pipeCh   <-chan pipeline.Message
 }
 
-func NewClient(
-	wg *sync.WaitGroup,
-	ct *container.Container,
-	pipeCh <-chan pipeline.Message,
-	addr string,
-	agentKey string,
-) (*GrpcClient, error) {
+func NewClient(wg *sync.WaitGroup, ct *container.Container, pipeCh <-chan pipeline.Message, addr string, agentKey string) (*GrpcClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &GrpcClient{
 		wg:       wg,
@@ -50,10 +44,6 @@ func NewClient(
 	}
 
 	if err := c.connect(); err != nil {
-		cancel()
-		return nil, err
-	}
-	if err := c.createStream(); err != nil {
 		cancel()
 		return nil, err
 	}

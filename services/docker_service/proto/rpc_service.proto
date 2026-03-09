@@ -21,8 +21,8 @@ service ContainerService{
     rpc LoginUser(LoginUserRequest) returns (LoginUserResponse);
     rpc ContainerState(AgentMessage) returns (ServerMessage);
 
-    rpc ContainerInfo(ContainerListData) returns (ServerMessage);
-    rpc ContainerInspect(ContainerInspectData) returns (ServerMessage);
-    rpc ContainerStats(ContainerStatsData) returns (ServerMessage);
-    rpc ContainerEvent(ContainerEventData) returns (ServerMessage);
+    rpc ContainerInfo(AgentMessage) returns (ServerMessage);
+    rpc ContainerInspect(AgentMessage) returns (ServerMessage);
+    rpc ContainerStats(AgentMessage) returns (ServerMessage);
+    rpc ContainerEvent(AgentMessage) returns (ServerMessage);
 }

@@ -14,6 +14,7 @@ type CollectorType string
 const (
 	TypeList    CollectorType = "list"
 	TypeInspect CollectorType = "inspect"
+	TypeStats   CollectorType = "stat"
 )
 
 // Manager 멀티 호스트 Collector 관리자
@@ -54,6 +55,8 @@ func (m *Manager) RegisterCollectors(hostName string, types []CollectorType, cfg
 			c = NewListCollector(client, cfg)
 		case TypeInspect:
 			c = NewInspectCollector(client, cfg)
+		case TypeStats:
+			c = NewStatsCollector(client, cfg)
 		}
 		if c != nil {
 			collectors = append(collectors, c)

@@ -49,7 +49,7 @@ func NewServer(wg *sync.WaitGroup, dockerMng *docker.DockerClientManager, cfg Co
 
 	// 모든 호스트에 Collector 등록
 	if err := manager.RegisterAllHosts(
-		[]collector.CollectorType{collector.TypeList, collector.TypeInspect},
+		[]collector.CollectorType{collector.TypeList, collector.TypeInspect, collector.TypeStats},
 		collectorCfg,
 	); err != nil {
 		logger.Log.Error("[PipeServer] collector registration fail: %v", err)
@@ -119,6 +119,7 @@ func (s *Server) handleMessage(msg pipeline.Message) {
 	// }
 	select {
 	case s.sendCh <- msg:
+		logger.Log.Print(2, "collect msg : [%s]", msg.Type)
 	case <-s.ctx.Done():
 	default:
 		logger.Log.Warn("[PipeServer] sendCh full, drop msg")

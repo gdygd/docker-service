@@ -24,46 +24,42 @@ var File_rpc_service_proto protoreflect.FileDescriptor
 
 const file_rpc_service_proto_rawDesc = "" +
 	"\n" +
-	"\x11rpc_service.proto\x12\x02pb\x1a\x11rpc_message.proto\x1a\x14server_message.proto\x1a\x12test_message.proto\x1a\x17container_message.proto2\xd9\x03\n" +
+	"\x11rpc_service.proto\x12\x02pb\x1a\x11rpc_message.proto\x1a\x14server_message.proto\x1a\x12test_message.proto\x1a\x17container_message.proto2\xc0\x03\n" +
 	"\x10ContainerService\x12'\n" +
 	"\vConnMessage\x12\t.pb.Hello\x1a\t.pb.Hello(\x010\x01\x125\n" +
 	"\n" +
 	"DataStream\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage(\x010\x01\x128\n" +
 	"\tLoginUser\x12\x14.pb.LoginUserRequest\x1a\x15.pb.LoginUserResponse\x125\n" +
-	"\x0eContainerState\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage\x129\n" +
-	"\rContainerInfo\x12\x15.pb.ContainerListData\x1a\x11.pb.ServerMessage\x12?\n" +
-	"\x10ContainerInspect\x12\x18.pb.ContainerInspectData\x1a\x11.pb.ServerMessage\x12;\n" +
-	"\x0eContainerStats\x12\x16.pb.ContainerStatsData\x1a\x11.pb.ServerMessage\x12;\n" +
-	"\x0eContainerEvent\x12\x16.pb.ContainerEventData\x1a\x11.pb.ServerMessageB\x13Z\x11docker_service/pbb\x06proto3"
+	"\x0eContainerState\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage\x124\n" +
+	"\rContainerInfo\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage\x127\n" +
+	"\x10ContainerInspect\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage\x125\n" +
+	"\x0eContainerStats\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessage\x125\n" +
+	"\x0eContainerEvent\x12\x10.pb.AgentMessage\x1a\x11.pb.ServerMessageB\x13Z\x11docker_service/pbb\x06proto3"
 
 var file_rpc_service_proto_goTypes = []any{
-	(*Hello)(nil),                // 0: pb.Hello
-	(*AgentMessage)(nil),         // 1: pb.AgentMessage
-	(*LoginUserRequest)(nil),     // 2: pb.LoginUserRequest
-	(*ContainerListData)(nil),    // 3: pb.ContainerListData
-	(*ContainerInspectData)(nil), // 4: pb.ContainerInspectData
-	(*ContainerStatsData)(nil),   // 5: pb.ContainerStatsData
-	(*ContainerEventData)(nil),   // 6: pb.ContainerEventData
-	(*ServerMessage)(nil),        // 7: pb.ServerMessage
-	(*LoginUserResponse)(nil),    // 8: pb.LoginUserResponse
+	(*Hello)(nil),             // 0: pb.Hello
+	(*AgentMessage)(nil),      // 1: pb.AgentMessage
+	(*LoginUserRequest)(nil),  // 2: pb.LoginUserRequest
+	(*ServerMessage)(nil),     // 3: pb.ServerMessage
+	(*LoginUserResponse)(nil), // 4: pb.LoginUserResponse
 }
 var file_rpc_service_proto_depIdxs = []int32{
 	0, // 0: pb.ContainerService.ConnMessage:input_type -> pb.Hello
 	1, // 1: pb.ContainerService.DataStream:input_type -> pb.AgentMessage
 	2, // 2: pb.ContainerService.LoginUser:input_type -> pb.LoginUserRequest
 	1, // 3: pb.ContainerService.ContainerState:input_type -> pb.AgentMessage
-	3, // 4: pb.ContainerService.ContainerInfo:input_type -> pb.ContainerListData
-	4, // 5: pb.ContainerService.ContainerInspect:input_type -> pb.ContainerInspectData
-	5, // 6: pb.ContainerService.ContainerStats:input_type -> pb.ContainerStatsData
-	6, // 7: pb.ContainerService.ContainerEvent:input_type -> pb.ContainerEventData
+	1, // 4: pb.ContainerService.ContainerInfo:input_type -> pb.AgentMessage
+	1, // 5: pb.ContainerService.ContainerInspect:input_type -> pb.AgentMessage
+	1, // 6: pb.ContainerService.ContainerStats:input_type -> pb.AgentMessage
+	1, // 7: pb.ContainerService.ContainerEvent:input_type -> pb.AgentMessage
 	0, // 8: pb.ContainerService.ConnMessage:output_type -> pb.Hello
-	7, // 9: pb.ContainerService.DataStream:output_type -> pb.ServerMessage
-	8, // 10: pb.ContainerService.LoginUser:output_type -> pb.LoginUserResponse
-	7, // 11: pb.ContainerService.ContainerState:output_type -> pb.ServerMessage
-	7, // 12: pb.ContainerService.ContainerInfo:output_type -> pb.ServerMessage
-	7, // 13: pb.ContainerService.ContainerInspect:output_type -> pb.ServerMessage
-	7, // 14: pb.ContainerService.ContainerStats:output_type -> pb.ServerMessage
-	7, // 15: pb.ContainerService.ContainerEvent:output_type -> pb.ServerMessage
+	3, // 9: pb.ContainerService.DataStream:output_type -> pb.ServerMessage
+	4, // 10: pb.ContainerService.LoginUser:output_type -> pb.LoginUserResponse
+	3, // 11: pb.ContainerService.ContainerState:output_type -> pb.ServerMessage
+	3, // 12: pb.ContainerService.ContainerInfo:output_type -> pb.ServerMessage
+	3, // 13: pb.ContainerService.ContainerInspect:output_type -> pb.ServerMessage
+	3, // 14: pb.ContainerService.ContainerStats:output_type -> pb.ServerMessage
+	3, // 15: pb.ContainerService.ContainerEvent:output_type -> pb.ServerMessage
 	8, // [8:16] is the sub-list for method output_type
 	0, // [0:8] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

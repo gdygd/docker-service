@@ -44,7 +44,11 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 
 	// init grpc client
 	// gclient, _ := gapi.NewClient(wg, ct, ch_terminate, pipeCh)
-	gclient, _ := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
+	gclient, err := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
+	if err != nil {
+		logger.Log.Error("gRPC client initialization fail.. %v", err)
+		return nil
+	}
 
 	return &Application{
 		wg:         wg,
