@@ -6,7 +6,9 @@ import (
 	"docker_service/internal/container"
 	"docker_service/internal/db"
 	"docker_service/internal/docker"
-	"docker_service/internal/event"
+
+	// "docker_service/internal/event"
+	evt "docker_service/internal/event2"
 	"docker_service/internal/logger"
 	"docker_service/internal/server/ws"
 	"docker_service/internal/service"
@@ -44,10 +46,10 @@ type Server struct {
 	dbHnd        db.DbHandler
 	ch_terminate chan bool
 
-	eventMgr *event.EventManager
+	eventMgr *evt.EventManager
 }
 
-func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bool) (*Server, error) {
+func NewServer(wg *sync.WaitGroup, ct *container.Container, eventMgr *evt.EventManager) (*Server, error) {
 	// init service
 	apiservice := apiserv.NewApiService(ct.DbHnd, ct.Docker, ct.DockerMng)
 	tokenMaker, err := token.NewJWTMaker(ct.Config.TokenSecretKey)
@@ -58,16 +60,15 @@ func NewServer(wg *sync.WaitGroup, ct *container.Container, ch_terminate chan bo
 	ctx, cancel := context.WithCancel(context.Background())
 
 	server := &Server{
-		ctx:          ctx,
-		wg:           wg,
-		config:       ct.Config,
-		tokenMaker:   tokenMaker,
-		service:      apiservice,
-		dbHnd:        ct.DbHnd,
-		ch_terminate: ch_terminate,
-		hub:          ws.NewHub(ctx),
-		svr_cancel:   cancel,
-		eventMgr:     event.NewEventManager(ctx, ct.DockerMng),
+		ctx:        ctx,
+		wg:         wg,
+		config:     ct.Config,
+		tokenMaker: tokenMaker,
+		service:    apiservice,
+		dbHnd:      ct.DbHnd,
+		hub:        ws.NewHub(ctx),
+		svr_cancel: cancel,
+		eventMgr:   eventMgr,
 	}
 
 	server.setupRouter()
@@ -291,17 +292,17 @@ func (server *Server) updateContainerStats() {
 func (server *Server) Start() error {
 	logger.Log.Print(2, "Gin server start.")
 
-	// 1. EventManager 시작
-	server.eventMgr.Start()
+	// // 1. EventManager 시작
+	// server.eventMgr.Start()
 
-	// 2. 초기 호스트들 watch 시작 (설정된 모든 호스트)
-	hosts, _ := server.config.GetDockerHosts()
+	// // 2. 초기 호스트들 watch 시작 (설정된 모든 호스트)
+	// hosts, _ := server.config.GetDockerHosts()
 
-	for _, host := range hosts {
-		if err := server.eventMgr.WatchHost(host.Name); err != nil {
-			logger.Log.Error("Failed to watch host %s: %v", host, err)
-		}
-	}
+	// for _, host := range hosts {
+	// 	if err := server.eventMgr.WatchHost(host.Name); err != nil {
+	// 		logger.Log.Error("Failed to watch host %s: %v", host, err)
+	// 	}
+	// }
 
 	// 3. SSE에 이벤트 연결
 	go server.bridgeEventsToSSE()
@@ -328,8 +329,8 @@ func (server *Server) Shutdown() error {
 	defer cancel()
 	defer server.wg.Done()
 
-	// EventManager 종료 (graceful)
-	server.eventMgr.Stop()
+	// // EventManager 종료 (graceful)
+	// server.eventMgr.Stop()
 
 	server.svr_cancel()
 

@@ -2,9 +2,11 @@ package app
 
 import (
 	"docker_service/internal/container"
+	evt "docker_service/internal/event2"
 	"docker_service/internal/logger"
 	"docker_service/internal/pipeline"
 	"docker_service/internal/server/api"
+	"docker_service/internal/server/event"
 	"docker_service/internal/server/pipe"
 	gapi "docker_service/internal/server/rpc_client"
 	"sync"
@@ -16,7 +18,8 @@ type Application struct {
 	PipeServer *pipe.Server
 	Gclient    *gapi.GrpcClient
 
-	pipeCh chan pipeline.Message // pipe - rcp client간 데이터 전송 채널
+	eventServer *event.Server
+	pipeCh      chan pipeline.Message // pipe - rcp client간 데이터 전송 채널
 }
 
 func NewApplication(ct *container.Container, ch_terminate chan bool) *Application {
@@ -24,8 +27,17 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 
 	pipeCh := make(chan pipeline.Message, 100)
 
+	// event 수집 인스턴스 (evtMgr : container.Container 멤버로 관리 고려)
+	evtMgr := evt.NewEventManager(ct.DockerMng)
+	// event 수집 메니저 초기화
+	evtsvr, err := event.NewServer(wg, ct, evtMgr) // evtMgr : watch host, and 이벤트 수집
+	if err != nil {
+		logger.Log.Error("Event server initialization fail.. %v", err)
+		return nil
+	}
+
 	// new httpserver
-	apisvr, err := api.NewServer(wg, ct, ch_terminate)
+	apisvr, err := api.NewServer(wg, ct, evtMgr) // evtMgr : 이벤트 구독
 	if err != nil {
 		logger.Log.Error("Api server initialization fail.. %v", err)
 		return nil
@@ -36,7 +48,7 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 		IntervalSec: 30, // 30초 주기
 		BufferSize:  50,
 	}
-	pipesvr, err := pipe.NewServer(wg, ct.DockerMng, pipeCfg, pipeCh)
+	pipesvr, err := pipe.NewServer(wg, ct.DockerMng, pipeCfg, pipeCh, evtMgr)
 	if err != nil {
 		logger.Log.Error("Pipe server initialization fail.. %v", err)
 		return nil
@@ -51,11 +63,12 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 	}
 
 	return &Application{
-		wg:         wg,
-		ApiServer:  apisvr,
-		PipeServer: pipesvr,
-		Gclient:    gclient,
-		pipeCh:     pipeCh,
+		wg:          wg,
+		ApiServer:   apisvr,
+		PipeServer:  pipesvr,
+		Gclient:     gclient,
+		pipeCh:      pipeCh,
+		eventServer: evtsvr,
 	}
 }
 
@@ -74,6 +87,11 @@ func (app *Application) Start() {
 	app.wg.Add(1)
 	logger.Log.Print(3, "Start gRPC client..")
 	go app.Gclient.Start()
+
+	// event server 시작
+	app.wg.Add(1)
+	logger.Log.Print(3, "Start event server..")
+	go app.eventServer.Start()
 }
 
 func (app *Application) Shutdown() {
@@ -86,6 +104,11 @@ func (app *Application) Shutdown() {
 
 	logger.Log.Print(3, "Shutdown grpc client..")
 	go app.Gclient.Shutdown()
+
+	// event server 시작
+	app.wg.Add(1)
+	logger.Log.Print(3, "Shutdown event server..")
+	go app.eventServer.Shutdown()
 
 	logger.Log.Print(3, "Shutdown complete")
 }

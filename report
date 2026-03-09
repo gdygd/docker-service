@@ -16,3 +16,8 @@
  > 스트림 생성 분리
 - app.go에서 grpc client 초기화시 nil 처리
 - stats 전송 (pipe에서 빠져있었음)
+- 이벤트 수집기 리팩토링 (event2 생성)
+- 이벤트 매니저 추가
+ > (app 하위 구조로, NewServer, Start, Shutdown 구조로 생성)
+ > (다른서버에서 이벤트 구독원할경우 이벤트 수집기만 파라미터로 넘겨서 구독하면 됨.)
+ 

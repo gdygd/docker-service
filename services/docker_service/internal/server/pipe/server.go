@@ -3,6 +3,7 @@ package pipe
 import (
 	"context"
 	"docker_service/internal/docker"
+	evt "docker_service/internal/event2"
 	"docker_service/internal/logger"
 	"docker_service/internal/pipeline"
 	"docker_service/internal/pipeline/collector"
@@ -17,7 +18,8 @@ type Server struct {
 	manager *collector.Manager
 	config  Config
 	// sendCh  chan<- pipeline.Message // write only
-	sendCh chan pipeline.Message
+	sendCh   chan pipeline.Message
+	eventMgr *evt.EventManager
 }
 
 // Config Pipeline 서버 설정
@@ -35,7 +37,12 @@ func DefaultConfig() Config {
 }
 
 // NewServer Pipeline 서버 생성
-func NewServer(wg *sync.WaitGroup, dockerMng *docker.DockerClientManager, cfg Config, pipeCh chan pipeline.Message) (*Server, error) {
+func NewServer(wg *sync.WaitGroup,
+	dockerMng *docker.DockerClientManager,
+	cfg Config,
+	pipeCh chan pipeline.Message,
+	eventMgr *evt.EventManager,
+) (*Server, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Manager 생성
@@ -56,12 +63,13 @@ func NewServer(wg *sync.WaitGroup, dockerMng *docker.DockerClientManager, cfg Co
 	}
 
 	return &Server{
-		ctx:     ctx,
-		cancel:  cancel,
-		wg:      wg,
-		manager: manager,
-		config:  cfg,
-		sendCh:  pipeCh,
+		ctx:      ctx,
+		cancel:   cancel,
+		wg:       wg,
+		manager:  manager,
+		config:   cfg,
+		sendCh:   pipeCh,
+		eventMgr: eventMgr,
 	}, nil
 }
 
@@ -74,6 +82,9 @@ func (s *Server) Start() error {
 	}
 
 	logger.Log.Print(3, "[PipeServer] started, collectors: %d", s.manager.GetCollectorCount())
+
+	// 이벤트 수집 구독
+	go s.bridgeEventsToPipe()
 
 	// 메시지 처리 루프
 	s.processMessages(outCh)
@@ -177,6 +188,36 @@ func (s *Server) handleInspectMessage(msg pipeline.Message) {
 		for _, m := range ins.Mounts {
 			logger.Log.Print(1, "\t [mount] type:%s, name:%v, src:%v, dst:%v mode:%s, rw:%v",
 				m.Type, m.Name, m.Source, m.Destination, m.Mode, m.RW)
+		}
+	}
+}
+
+// Pipe로 이벤트 전달하는 브릿지
+func (server *Server) bridgeEventsToPipe() {
+	logger.Log.Print(2, "bridgeEventsToPipe start..")
+	sub := server.eventMgr.Subscribe("pipe-bridge", 100, nil)
+	defer server.eventMgr.Unsubscribe("pipe-bridge")
+
+	for {
+		select {
+		case <-server.ctx.Done():
+			logger.Log.Print(2, "[bridgeEventsToSSE] context cancelled, stopping")
+			return
+		case evt, ok := <-sub.Events:
+			logger.Log.Print(2, "evt received..")
+
+			if !ok {
+				logger.Log.Print(2, "[bridgeEventsToSSE] channel closed, stopping")
+				return
+			}
+			// data, _ := json.Marshal(evt)
+
+			// goglib.SendSSE(goglib.EventData{
+			// 	Msgtype: "container-event",
+			// 	Data:    string(data),
+			// })
+
+			logger.Log.Print(2, "[pipe] collected event [%v]", evt)
 		}
 	}
 }

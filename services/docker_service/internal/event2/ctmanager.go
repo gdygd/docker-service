@@ -1,4 +1,4 @@
-package event
+package event2
 
 /*
 container event manager
@@ -75,12 +75,10 @@ type EventManager struct {
 	wg sync.WaitGroup
 }
 
-func NewEventManager(ctx context.Context, docMng *docker.DockerClientManager) *EventManager {
-	ctx, cancel := context.WithCancel(ctx)
-
+func NewEventManager(docMng *docker.DockerClientManager) *EventManager {
 	return &EventManager{
-		ctx:         ctx,
-		cancel:      cancel,
+		// ctx:         ctx,
+		// cancel:      cancel,
 		docMng:      docMng,
 		eventChan:   make(chan ContainerEvent, 100),
 		subscribers: make(map[string]*Subscriber),
@@ -89,7 +87,9 @@ func NewEventManager(ctx context.Context, docMng *docker.DockerClientManager) *E
 }
 
 // Start는 EventManager를 시작하고 dispatcher를 실행
-func (em *EventManager) Start() {
+func (em *EventManager) Start(parent context.Context) {
+	em.ctx, em.cancel = context.WithCancel(parent)
+
 	em.wg.Add(1)
 	go em.dispatcher()
 
