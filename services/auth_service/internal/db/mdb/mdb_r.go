@@ -1,8 +1,9 @@
 package mdb
 
 import (
-	"auth-service/internal/db"
 	"context"
+
+	"auth-service/internal/db"
 )
 
 func (q *MariaDbHandler) ReadSysdate(ctx context.Context) (string, error) {
@@ -86,8 +87,8 @@ func (q *MariaDbHandler) ReadUserSession(ctx context.Context, id string) (db.Ses
 		 , username    
 		 , refresh_token
 		 , user_agent   
-		 , client_ip    
-		 , is_blocked   
+		 , client_ip    		 
+		 , block_yn
 		 , expires_at   
 		 , created_at   
 	FROM sessions

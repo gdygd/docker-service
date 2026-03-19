@@ -21,3 +21,6 @@
  > (app 하위 구조로, NewServer, Start, Shutdown 구조로 생성)
  > (다른서버에서 이벤트 구독원할경우 이벤트 수집기만 파라미터로 넘겨서 구독하면 됨.)
  
+26.03.19
+-db 모델수정
+-auth-service ReadUserSession 쿼리 수정
