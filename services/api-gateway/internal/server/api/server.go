@@ -119,7 +119,12 @@ func (server *Server) newSSEProxy(target string) *httputil.ReverseProxy {
 		resp.Header.Set("Content-Type", "text/event-stream")
 		resp.Header.Set("Cache-Control", "no-cache")
 		resp.Header.Set("Connection", "keep-alive")
-		resp.Header.Set("Access-Control-Allow-Origin", "*")
+		// 백엔드(docker_service)가 설정한 CORS 헤더 제거 — gin corsMiddleware가 단일 값으로 설정하므로 중복 방지
+		resp.Header.Del("Access-Control-Allow-Origin")
+		resp.Header.Del("Access-Control-Allow-Methods")
+		resp.Header.Del("Access-Control-Allow-Headers")
+		resp.Header.Del("Access-Control-Expose-Headers")
+		resp.Header.Del("Access-Control-Allow-Credentials")
 		return nil
 	}
 

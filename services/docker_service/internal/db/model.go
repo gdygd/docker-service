@@ -40,3 +40,9 @@ type Session struct {
 	ExpiresAt    sql.NullTime `json:"expires_at"`
 	CreatedAt    sql.NullTime `json:"created_at"`
 }
+
+type Host struct {
+	HostId      int
+	HostName    string
+	HostAddress string
+}

@@ -1,9 +1,10 @@
 package gapi
 
 import (
+	"fmt"
+
 	"docker_service/internal/pipeline"
 	"docker_service/pb"
-	"fmt"
 )
 
 // ConvertToAgentMessage converts pipeline.Message to pb.AgentMessage for DataStream transmission.
@@ -39,7 +40,12 @@ func ConvertToAgentMessage(msg pipeline.Message, agentKey string) (*pb.AgentMess
 
 	case pipeline.DataTypeEvent:
 		// pipeline.ContainerEventData is not yet defined; skip conversion
-		return nil, fmt.Errorf("DataTypeEvent: not yet implemented")
+		// return nil, fmt.Errorf("DataTypeEvent: not yet implemented")
+		data, err := assertData[pipeline.ContainerEvent](msg.Data)
+		if err != nil {
+			return nil, fmt.Errorf("DataTypeEvent: %w", err)
+		}
+		pbMsg.Data = &pb.AgentMessage_EventData{EventData: convertEventData(data)}
 
 	default:
 		return nil, fmt.Errorf("unknown DataType: %s", msg.Type)
@@ -116,15 +122,15 @@ func convertInspectData(d pipeline.ContainerInspectData) *pb.ContainerInspectDat
 	inspects := make([]*pb.ContainerInspect, len(d.Inspects))
 	for i, ins := range d.Inspects {
 		inspects[i] = &pb.ContainerInspect{
-			Id:      ins.ID,
-			Name:    ins.Name,
-			Image:   ins.Image,
-			Created: ins.Created,
+			Id:       ins.ID,
+			Name:     ins.Name,
+			Image:    ins.Image,
+			Created:  ins.Created,
 			Platform: ins.Platform,
-			State:   convertContainerState(ins.State),
-			Config:  convertContainerConfig(ins.Config),
-			Network: convertContainerNetwork(ins.Network),
-			Mounts:  convertMounts(ins.Mounts),
+			State:    convertContainerState(ins.State),
+			Config:   convertContainerConfig(ins.Config),
+			Network:  convertContainerNetwork(ins.Network),
+			Mounts:   convertMounts(ins.Mounts),
 		}
 	}
 	return &pb.ContainerInspectData{Inspects: inspects}
@@ -206,4 +212,19 @@ func convertMounts(mounts []pipeline.MountPointInfo) []*pb.MountPoint {
 		}
 	}
 	return result
+}
+
+// --- event ---
+
+func convertEventData(d pipeline.ContainerEvent) *pb.ContainerEventData {
+	event := &pb.ContainerEventData{
+		Type:      d.Type,
+		Action:    d.Action,
+		ActorId:   d.ActorID,
+		ActorName: d.ActorName,
+		Timestamp: d.Timestamp,
+		Attrs:     d.Attrs,
+	}
+
+	return event
 }

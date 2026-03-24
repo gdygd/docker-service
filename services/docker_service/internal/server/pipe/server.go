@@ -2,12 +2,15 @@ package pipe
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"docker_service/internal/docker"
+	"docker_service/internal/event2"
 	evt "docker_service/internal/event2"
 	"docker_service/internal/logger"
 	"docker_service/internal/pipeline"
 	"docker_service/internal/pipeline/collector"
-	"sync"
 )
 
 // Server Pipeline 데이터 수집 서버
@@ -119,7 +122,7 @@ func (s *Server) processMessages(outCh <-chan pipeline.Message) {
 // handleMessage 개별 메시지 처리
 func (s *Server) handleMessage(msg pipeline.Message) {
 	// TODO: gRPC Sender로 전송
-	logger.Log.Print(1, "[PipeServer] type=%s host=%s timestamp=%v",
+	logger.Log.Print(3, "[PipeServer] type=%s host=%s timestamp=%v",
 		msg.Type, msg.Host, msg.Timestamp)
 
 	// switch msg.Type {
@@ -218,6 +221,27 @@ func (server *Server) bridgeEventsToPipe() {
 			// })
 
 			logger.Log.Print(2, "[pipe] collected event [%v]", evt)
+			// convert  pipeline.Message
+			msg := ToContainerEventPipeMessage(evt)
+			server.handleMessage(msg)
 		}
 	}
+}
+
+func ToContainerEventPipeMessage(evt event2.ContainerEvent) pipeline.Message {
+	msg := pipeline.Message{
+		Type:      pipeline.DataTypeEvent,
+		Host:      evt.Host,
+		Timestamp: time.Now(),
+		Data: pipeline.ContainerEvent{
+			Host:      evt.Host,
+			Type:      evt.Type,
+			Action:    evt.Action,
+			ActorID:   evt.ActorID,
+			ActorName: evt.ActorName,
+			Timestamp: evt.Timestamp,
+			Attrs:     evt.Attrs,
+		},
+	}
+	return msg
 }

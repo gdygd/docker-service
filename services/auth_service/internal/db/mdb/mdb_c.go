@@ -1,8 +1,9 @@
 package mdb
 
 import (
-	"auth-service/internal/db"
 	"context"
+
+	"auth-service/internal/db"
 )
 
 func (q *MariaDbHandler) CreateUser(ctx context.Context, arg db.CreateUserParams) (db.User, error) {
@@ -48,8 +49,8 @@ func (q *MariaDbHandler) CreateUserSession(ctx context.Context, arg db.CreateSes
 	ado := q.GetDB()
 
 	query := `
-	INSERT INTO sessions (ID, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at)
-	VALUES(?, ?, ?, ?, ?, ?, ?, now()) RETURNING ID, username, refresh_token, user_agent, client_ip, is_blocked, expires_at, created_at
+	INSERT INTO sessions (ID, username, refresh_token, user_agent, client_ip, block_yn, expires_at, created_at)
+	VALUES(?, ?, ?, ?, ?, ?, ?, now()) RETURNING ID, username, refresh_token, user_agent, client_ip, block_yn, expires_at, created_at
 	`
 
 	row := ado.QueryRow(query,

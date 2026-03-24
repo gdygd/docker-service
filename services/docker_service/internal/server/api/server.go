@@ -2,6 +2,12 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sync"
+	"time"
+
 	"docker_service/internal/config"
 	"docker_service/internal/container"
 	"docker_service/internal/db"
@@ -12,11 +18,6 @@ import (
 	"docker_service/internal/logger"
 	"docker_service/internal/server/ws"
 	"docker_service/internal/service"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"sync"
-	"time"
 
 	apiserv "docker_service/internal/service/api"
 
@@ -110,12 +111,12 @@ func (server *Server) setupRouter() {
 	router.POST("/stop/:id", server.stopContainer)      // none tls sdk api (x)
 	router.GET("/stat/:id", server.statContainer)       // none tls sdk api (x)
 
-	router.GET("/ps2/:host", server.dockerPs2)                  // apply tls sdk api
-	router.GET("/inspect2/:host/:id", server.containerInspect2) // apply tls sdk api
-	router.POST("/start2", server.startContainer2)              // apply tls sdk api
-	router.POST("/stop2", server.stopContainer2)                // apply tls sdk api
-	router.GET("/stat2/:host/:id", server.statContainer2)       // apply tls sdk api
-	router.GET("/stat3/:host", server.statContainer3)           // apply tls sdk api - all container stats
+	router.GET("/ps2/:hostid", server.dockerPs2)                  // apply tls sdk api
+	router.GET("/inspect2/:hostid/:id", server.containerInspect2) // apply tls sdk api
+	router.POST("/start2", server.startContainer2)                // apply tls sdk api
+	router.POST("/stop2", server.stopContainer2)                  // apply tls sdk api
+	router.GET("/stat2/:host/:id", server.statContainer2)         // apply tls sdk api
+	router.GET("/stat3/:hostid", server.statContainer3)           // apply tls sdk api - all container stats
 
 	router.GET("/ws", server.wsHandler)
 	router.GET("/events", gin.WrapF(handleSSE()))

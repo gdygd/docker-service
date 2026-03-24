@@ -24,3 +24,10 @@
 26.03.19
 -db 모델수정
 -auth-service ReadUserSession 쿼리 수정
+
+26.03.24
+-container event parse to rpc data
+-container event rpc send
+-host api 수정 (host id추가)
+-config정보에서 도커호스트 정보 디비 정보로 수정
+-sse cors 중복제거

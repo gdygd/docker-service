@@ -28,5 +28,7 @@ type ServiceInterface interface {
 	LoginUser(ctx context.Context, username string) (db.User, error)
 	CreateSession(ctx context.Context, arg db.CreateSessionParams) (db.Session, error)
 	ReadSession(ctx context.Context, id string) (db.Session, error)
+	ReadHost(ctx context.Context) ([]db.Host, error)
+	ReadHostInfo(ctx context.Context, hostid int) (db.Host, error)
 	DeleteSession(ctx context.Context, id string) error
 }

@@ -1,12 +1,13 @@
 package api
 
 import (
-	"api-gateway/internal/logger"
 	"errors"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"api-gateway/internal/logger"
 
 	"github.com/gdygd/goglib/token"
 	"github.com/gin-contrib/cors"
@@ -26,12 +27,21 @@ func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 
 		if strings.HasPrefix(path, "/auth/login") ||
 			strings.HasPrefix(path, "/auth/refresh") ||
+			strings.HasPrefix(path, "/docker-sse/events") ||
 			strings.HasPrefix(path, "/public") {
 			ctx.Next()
 			return
 		}
+		authorizationHeader := ""
+		if strings.HasPrefix(path, "/docker-sse/events") {
+			authorizationHeader = "Bearer "
+			authorizationHeader += ctx.Query("token")
+			logger.Log.Print(2, "sse token : %s", authorizationHeader)
+		} else {
+			authorizationHeader = ctx.GetHeader(authorizationHeaderKey)
+			logger.Log.Print(2, "req token : %s", authorizationHeader)
+		}
 
-		authorizationHeader := ctx.GetHeader(authorizationHeaderKey)
 		if len(authorizationHeader) == 0 {
 			err := errors.New("authorization header is not provided")
 			ctx.AbortWithStatusJSON(http.StatusUnauthorized, errorResponse(err))
@@ -71,9 +81,9 @@ func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 func corsMiddleware(origins []string) gin.HandlerFunc {
 	fmt.Printf("cors : %v \n", origins)
 	return cors.New(cors.Config{
-		// AllowOrigins: origins,
+		AllowOrigins: origins,
 		// AllowOrigins: []string{"http://localhost:3000", "http://localhost:3001", "http://10.1.0.119:8082", "http://10.1.1.164:8082", "http://theroad.web.com:8082"},
-		AllowOrigins: []string{"http://10.1.0.119:5173", "http://192.168.2.119:5173", "http://192.168.2.119:9081", "http://localhost:3000"},
+		// AllowOrigins: []string{"http://10.1.0.119:5173", "http://192.168.2.119:5173", "http://192.168.2.119:9081", "http://localhost:3000"},
 		AllowMethods: []string{
 			http.MethodHead,
 			http.MethodOptions,

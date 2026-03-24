@@ -2,11 +2,12 @@ package collector
 
 import (
 	"context"
+	"sync"
+	"time"
+
 	"docker_service/internal/docker"
 	"docker_service/internal/logger"
 	"docker_service/internal/pipeline"
-	"sync"
-	"time"
 )
 
 // InspectCollector Container Inspect 수집기
@@ -91,7 +92,7 @@ func (c *InspectCollector) collect(ctx context.Context) {
 
 		// SDK 결과 -> docker.ContainerInspect -> pipeline.ContainerInspectInfo 변환
 		dockerInspect := docker.ConvertInspectResult(inspectResult)
-		info := convertInspectResult(dockerInspect)
+		info := convertInspectResult(dockerInspect, ct.ID)
 		inspects = append(inspects, info)
 	}
 
@@ -109,9 +110,10 @@ func (c *InspectCollector) collect(ctx context.Context) {
 }
 
 // convertInspectResult docker API 결과를 pipeline 타입으로 변환
-func convertInspectResult(result docker.ContainerInspect) pipeline.ContainerInspectInfo {
+func convertInspectResult(result docker.ContainerInspect, containerid string) pipeline.ContainerInspectInfo {
 	info := pipeline.ContainerInspectInfo{
-		ID:           result.ID,
+		ID:           containerid,
+		ID2:          result.ID,
 		Name:         result.Name,
 		Image:        result.Image,
 		Created:      result.Created,

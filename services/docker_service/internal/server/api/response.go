@@ -77,10 +77,28 @@ type DockerHostConfig struct {
 	Addr string `json:"addr"`
 }
 
+type DockerHost struct {
+	HostId      int    `json:"id"`
+	HostName    string `json:"host"`
+	HostAddress string `json:"addr"`
+}
+
 func ToContainerHostResponse(hostinfos []config.DockerHostConfig) []DockerHostConfig {
 	var hosts []DockerHostConfig = []DockerHostConfig{}
 	for _, host := range hostinfos {
 		hosts = append(hosts, DockerHostConfig{Name: host.Name, Addr: host.Addr})
+	}
+	return hosts
+}
+
+func ToContainerHostResponse2(hostinfos []db.Host) []DockerHost {
+	var hosts []DockerHost = []DockerHost{}
+	for _, host := range hostinfos {
+		hosts = append(hosts, DockerHost{
+			HostId:      host.HostId,
+			HostName:    host.HostName,
+			HostAddress: host.HostAddress,
+		})
 	}
 	return hosts
 }

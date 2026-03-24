@@ -2,10 +2,11 @@ package gapi
 
 import (
 	"context"
-	"docker_service/internal/logger"
-	"docker_service/pb"
 	"fmt"
 	"time"
+
+	"docker_service/internal/logger"
+	"docker_service/pb"
 )
 
 // newServiceClient creates a stateless unary client per call.

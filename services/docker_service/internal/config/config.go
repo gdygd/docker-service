@@ -9,6 +9,7 @@ import (
 
 // DockerHostConfig는 Docker 호스트 설정
 type DockerHostConfig struct {
+	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Addr string `json:"addr"`
 }
@@ -31,8 +32,9 @@ type Config struct {
 	PROCESS_INTERVAL time.Duration `mapstructure:"PROCESS_INTERVAL"`
 	DebugLv          int           `mapstructure:"DEBUG_LV"`
 
-	CERT_PATH    string `mapstructure:"CERT_PATH"`
-	DOCKER_HOSTS string `mapstructure:"DOCKER_HOSTS"` // JSON format: [{"name":"host1","addr":"tcp://..."}]
+	CERT_PATH           string `mapstructure:"CERT_PATH"`
+	DOCKER_HOSTS        string `mapstructure:"DOCKER_HOSTS"` // JSON format: [{"name":"host1","addr":"tcp://..."}]
+	AwsRpcServerAddress string `mapstructure:"AWS_RPC_SERVER"`
 }
 
 // GetDockerHosts는 DOCKER_HOSTS JSON 문자열을 파싱하여 반환

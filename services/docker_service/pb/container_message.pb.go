@@ -7,11 +7,12 @@
 package pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -1215,29 +1216,32 @@ func file_container_message_proto_rawDescGZIP() []byte {
 	return file_container_message_proto_rawDescData
 }
 
-var file_container_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_container_message_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
-var file_container_message_proto_goTypes = []any{
-	(DataType)(0),                // 0: pb.DataType
-	(*ContainerListData)(nil),    // 1: pb.ContainerListData
-	(*ContainerInfo)(nil),        // 2: pb.ContainerInfo
-	(*ContainerStatsData)(nil),   // 3: pb.ContainerStatsData
-	(*ContainerStats)(nil),       // 4: pb.ContainerStats
-	(*ContainerInspectData)(nil), // 5: pb.ContainerInspectData
-	(*ContainerInspect)(nil),     // 6: pb.ContainerInspect
-	(*ContainerState)(nil),       // 7: pb.ContainerState
-	(*ContainerConfig)(nil),      // 8: pb.ContainerConfig
-	(*ContainerNetwork)(nil),     // 9: pb.ContainerNetwork
-	(*PortBindings)(nil),         // 10: pb.PortBindings
-	(*PortBinding)(nil),          // 11: pb.PortBinding
-	(*NetworkEndpoint)(nil),      // 12: pb.NetworkEndpoint
-	(*MountPoint)(nil),           // 13: pb.MountPoint
-	(*ContainerEventData)(nil),   // 14: pb.ContainerEventData
-	nil,                          // 15: pb.ContainerConfig.LabelsEntry
-	nil,                          // 16: pb.ContainerNetwork.PortsEntry
-	nil,                          // 17: pb.ContainerNetwork.NetworksEntry
-	nil,                          // 18: pb.ContainerEventData.AttrsEntry
-}
+var (
+	file_container_message_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+	file_container_message_proto_msgTypes  = make([]protoimpl.MessageInfo, 18)
+	file_container_message_proto_goTypes   = []any{
+		(DataType)(0),                // 0: pb.DataType
+		(*ContainerListData)(nil),    // 1: pb.ContainerListData
+		(*ContainerInfo)(nil),        // 2: pb.ContainerInfo
+		(*ContainerStatsData)(nil),   // 3: pb.ContainerStatsData
+		(*ContainerStats)(nil),       // 4: pb.ContainerStats
+		(*ContainerInspectData)(nil), // 5: pb.ContainerInspectData
+		(*ContainerInspect)(nil),     // 6: pb.ContainerInspect
+		(*ContainerState)(nil),       // 7: pb.ContainerState
+		(*ContainerConfig)(nil),      // 8: pb.ContainerConfig
+		(*ContainerNetwork)(nil),     // 9: pb.ContainerNetwork
+		(*PortBindings)(nil),         // 10: pb.PortBindings
+		(*PortBinding)(nil),          // 11: pb.PortBinding
+		(*NetworkEndpoint)(nil),      // 12: pb.NetworkEndpoint
+		(*MountPoint)(nil),           // 13: pb.MountPoint
+		(*ContainerEventData)(nil),   // 14: pb.ContainerEventData
+		nil,                          // 15: pb.ContainerConfig.LabelsEntry
+		nil,                          // 16: pb.ContainerNetwork.PortsEntry
+		nil,                          // 17: pb.ContainerNetwork.NetworksEntry
+		nil,                          // 18: pb.ContainerEventData.AttrsEntry
+	}
+)
+
 var file_container_message_proto_depIdxs = []int32{
 	2,  // 0: pb.ContainerListData.containers:type_name -> pb.ContainerInfo
 	4,  // 1: pb.ContainerStatsData.stats:type_name -> pb.ContainerStats

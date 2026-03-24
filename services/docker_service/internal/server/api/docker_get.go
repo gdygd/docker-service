@@ -2,24 +2,37 @@ package api
 
 import (
 	"context"
-	"docker_service/internal/docker"
-	"docker_service/internal/logger"
 	"net/http"
 	"sync"
 	"time"
 
+	"docker_service/internal/docker"
+	"docker_service/internal/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
+// func (server *Server) dockerHostList(ctx *gin.Context) {
+// 	hostconfigs, err := server.config.GetDockerHosts()
+// 	if err != nil {
+// 		logger.Log.Error("dockerHostList error.. [%v]", err)
+// 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
+// 		return
+// 	}
+
+// 	response := ToContainerHostResponse(hostconfigs)
+// 	ctx.JSON(http.StatusOK, SuccessResponse(response))
+// }
+
 func (server *Server) dockerHostList(ctx *gin.Context) {
-	hostconfigs, err := server.config.GetDockerHosts()
+	hosts, err := server.service.ReadHost(ctx)
 	if err != nil {
 		logger.Log.Error("dockerHostList error.. [%v]", err)
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
 
-	response := ToContainerHostResponse(hostconfigs)
+	response := ToContainerHostResponse2(hosts)
 	ctx.JSON(http.StatusOK, SuccessResponse(response))
 }
 
@@ -36,13 +49,15 @@ func (server *Server) dockerPs(ctx *gin.Context) {
 }
 
 func (server *Server) dockerPs2(ctx *gin.Context) {
-	var req requestHostName
+	var req requestHostId
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
-	containers, err := server.service.ContainerList2(ctx, req.Host)
+	host, _ := server.service.ReadHostInfo(ctx, req.HostId)
+
+	containers, err := server.service.ContainerList2(ctx, host.HostName)
 	if err != nil {
 		logger.Log.Error("Service Container list error.. [%v]", err)
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
@@ -72,13 +87,15 @@ func (server *Server) containerInspect(ctx *gin.Context) {
 }
 
 func (server *Server) containerInspect2(ctx *gin.Context) {
-	var req requestHost_ID
+	var req requestHostId_ID
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
 
-	inspect, err := server.service.InspectContainer2(ctx, req.Id, req.Host)
+	host, _ := server.service.ReadHostInfo(ctx, req.HostId)
+
+	inspect, err := server.service.InspectContainer2(ctx, req.Id, host.HostName)
 	if err != nil {
 		logger.Log.Error("Service Inspect container error.. [%v]", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -146,13 +163,16 @@ func (server *Server) statContainer2(ctx *gin.Context) {
 func (server *Server) statContainer3(ctx *gin.Context) {
 	logger.Log.Print(2, "[statContainer3] called - path: %s", ctx.Request.URL.Path)
 
-	var req requestHostName
+	var req requestHostId
 	if err := ctx.ShouldBindUri(&req); err != nil {
 		logger.Log.Error("[statContainer3] bind error: %v", err)
 		ctx.JSON(http.StatusBadRequest, ErrorResponse(err.Error()))
 		return
 	}
-	logger.Log.Print(2, "[statContainer3] host: %s", req.Host)
+
+	host, _ := server.service.ReadHostInfo(ctx, req.HostId)
+
+	logger.Log.Print(2, "[statContainer3] host: %s", host.HostName)
 
 	containers, err := server.service.ContainerList(ctx)
 	if err != nil {
@@ -175,7 +195,7 @@ func (server *Server) statContainer3(ctx *gin.Context) {
 		go func() {
 			defer wg.Done()
 			// child_ctx 사용하여 timeout 적용
-			rst, err := server.service.ContainerStats2(child_ctx, req.Host, c.ID, false)
+			rst, err := server.service.ContainerStats2(child_ctx, host.HostName, c.ID, false)
 			if err != nil {
 				logger.Log.Error("get Containerstats error [%s] [%v]", c.ID, err)
 				return

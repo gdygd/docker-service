@@ -40,7 +40,8 @@ type ContainerInspectData struct {
 
 type ContainerInspectInfo struct {
 	// 기본 정보
-	ID           string `json:"id"`
+	ID           string `json:"id"`  // container id 12byte
+	ID2          string `json:"id2"` // container id 64byte
 	Name         string `json:"name"`
 	Image        string `json:"image"`
 	Created      string `json:"created"`
@@ -118,9 +119,19 @@ type ContainerStatsInfo struct {
 	ID            string  `json:"id"`
 	Name          string  `json:"name"`
 	CPUPercent    float64 `json:"cpu_percent"`
-	MemoryUsage   uint64  `json:"memory_usage"`   // bytes
-	MemoryLimit   uint64  `json:"memory_limit"`   // bytes
+	MemoryUsage   uint64  `json:"memory_usage"` // bytes
+	MemoryLimit   uint64  `json:"memory_limit"` // bytes
 	MemoryPercent float64 `json:"memory_percent"`
 	NetworkRx     uint64  `json:"network_rx"` // bytes
 	NetworkTx     uint64  `json:"network_tx"` // bytes
+}
+
+type ContainerEvent struct {
+	Host      string            `json:"host"`
+	Type      string            `json:"type"`   // container, image, network...
+	Action    string            `json:"action"` // start, stop, die...
+	ActorID   string            `json:"actor_id"`
+	ActorName string            `json:"actor_name"`
+	Timestamp int64             `json:"timestamp"`
+	Attrs     map[string]string `json:"attrs,omitempty"`
 }

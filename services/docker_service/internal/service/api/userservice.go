@@ -43,6 +43,14 @@ func (s *ApiService) ReadSession(ctx context.Context, id string) (db.Session, er
 	return user, nil
 }
 
+func (s *ApiService) ReadHost(ctx context.Context) ([]db.Host, error) {
+	return s.dbHnd.ReadHost(ctx)
+}
+
+func (s *ApiService) ReadHostInfo(ctx context.Context, hostid int) (db.Host, error) {
+	return s.dbHnd.ReadHostInfo(ctx, hostid)
+}
+
 func (s *ApiService) DeleteSession(ctx context.Context, id string) error {
 	err := s.dbHnd.DeleteUserSession(ctx, id)
 	if err != nil {

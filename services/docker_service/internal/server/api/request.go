@@ -32,3 +32,12 @@ type requestHost_ID struct {
 type requestHostName struct {
 	Host string `uri:"host" binding:"required"`
 }
+
+type requestHostId struct {
+	HostId int `uri:"hostid" binding:"required"`
+}
+
+type requestHostId_ID struct {
+	HostId int    `uri:"hostid" binding:"required"`
+	Id     string `uri:"id" binding:"required"` // container id
+}

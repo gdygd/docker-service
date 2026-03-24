@@ -1,6 +1,8 @@
 package app
 
 import (
+	"sync"
+
 	"docker_service/internal/container"
 	evt "docker_service/internal/event2"
 	"docker_service/internal/logger"
@@ -9,7 +11,6 @@ import (
 	"docker_service/internal/server/event"
 	"docker_service/internal/server/pipe"
 	gapi "docker_service/internal/server/rpc_client"
-	"sync"
 )
 
 type Application struct {
@@ -55,8 +56,8 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 	}
 
 	// init grpc client
-	// gclient, _ := gapi.NewClient(wg, ct, ch_terminate, pipeCh)
-	gclient, err := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
+	// gclient, err := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
+	gclient, err := gapi.NewClient(wg, ct, pipeCh, ct.Config.AwsRpcServerAddress, "agentkey...")
 	if err != nil {
 		logger.Log.Error("gRPC client initialization fail.. %v", err)
 		return nil

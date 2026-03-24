@@ -1,13 +1,16 @@
 package container
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+
 	"docker_service/internal/config"
 	"docker_service/internal/db"
 	"docker_service/internal/db/mdb"
 	"docker_service/internal/docker"
 	"docker_service/internal/logger"
 	"docker_service/internal/memory"
-	"fmt"
 
 	"github.com/gdygd/goglib/databus"
 )
@@ -75,6 +78,9 @@ func NewContainer() (*Container, error) {
 	// init databus
 	container.Bus = databus.NewDataBus()
 
+	strconfig := initHostInfo(dbhnd)
+	container.Config.DOCKER_HOSTS = strconfig
+
 	return container, nil
 }
 
@@ -89,4 +95,28 @@ func initDatabase(config config.Config) db.DbHandler {
 		logger.Log.Error("Db Init err.. %v", err)
 	}
 	return mdb
+}
+
+// DockerHostConfig는 Docker 호스트 설정
+type DockerHostConfig struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+	Addr string `json:"addr"`
+}
+
+func initHostInfo(dbHnd db.DbHandler) string {
+	hosts, _ := dbHnd.ReadHost(context.Background())
+	hostinfo := []DockerHostConfig{}
+	for _, host := range hosts {
+		hostinfo = append(hostinfo, DockerHostConfig{
+			Id:   host.HostId,
+			Name: host.HostName,
+			Addr: host.HostAddress,
+		})
+	}
+	data, _ := json.Marshal(hostinfo)
+
+	fmt.Printf("##########%s \n", string(data))
+
+	return string(data)
 }
