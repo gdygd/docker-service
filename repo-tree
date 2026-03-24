@@ -48,16 +48,3 @@ docker-mng/
 ├── docs/
 ├── Makefile
 └── README.md
-
-
-
-[Client] → [API Gateway:8080]
-                ↓
-        ┌───────┴───────┐
-        ↓               ↓
-[Auth Service]    [Docker Service]
-   :8081              :8082
-        ↓               ↓
-      [DB]          [Docker API]
-
-
