@@ -218,10 +218,12 @@ GET /hosts
   "success": true,
   "data": [
     {
+      "id" : 1,
       "host": "119server",
       "addr": "tcp://10.1.0.119:2376"
     },
     {
+      "id" : 2,
       "host": "dev-server",
       "addr": "tcp://10.1.0.120:2376"
     }
@@ -232,6 +234,7 @@ GET /hosts
 ### Response Fields
 | Field | Type | Description |
 |-------|------|-------------|
+| `id` | number | 호스트 식별 id |
 | `host` | string | 호스트 식별 이름 |
 | `addr` | string | Docker Daemon 주소 (tcp:// 또는 unix) |
 
@@ -243,17 +246,17 @@ GET /hosts
 
 ### Request
 ```
-GET /ps2/{host}
+GET /ps2/{hostid}
 ```
 
 ### Path Parameters
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `host` | string | Yes | 호스트 식별 이름 (예: `119server`) |
+| `hostid` | number | Yes | 호스트 식별 이름 (예: `1`) |
 
 ### Example
 ```
-GET /ps2/119server
+GET /ps2/1
 ```
 
 ### Response
@@ -290,24 +293,24 @@ GET /ps2/119server
 
 ---
 
-## 7. GET /inspect2/:host/:id
+## 7. GET /inspect2/:hostid/:id
 
 특정 호스트의 컨테이너 상세 정보를 조회합니다.
 
 ### Request
 ```
-GET /inspect2/{host}/{id}
+GET /inspect2/{hostid}/{id}
 ```
 
 ### Path Parameters
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `host` | string | Yes | 호스트 식별 이름 |
+| `hostid` | number | Yes | 호스트 식별 ID |
 | `id` | string | Yes | 컨테이너 ID 또는 이름 |
 
 ### Example
 ```
-GET /inspect2/119server/a1b2c3d4e5f6
+GET /inspect2/1/a1b2c3d4e5f6
 ```
 
 ### Response
@@ -449,7 +452,7 @@ Content-Type: application/json
 
 {
   "id": "a1b2c3d4e5f6",
-  "host": "119server"
+  "hostid": 1
 }
 ```
 
@@ -457,7 +460,7 @@ Content-Type: application/json
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | Yes | 컨테이너 ID 또는 이름 |
-| `host` | string | Yes | 호스트 식별 이름 |
+| `hostid` | number | Yes | 호스트 식별 id |
 
 ### Response (Success)
 ```
@@ -486,7 +489,7 @@ Content-Type: application/json
 
 {
   "id": "a1b2c3d4e5f6",
-  "host": "119server"
+  "hostid": 1
 }
 ```
 
@@ -494,7 +497,7 @@ Content-Type: application/json
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | Yes | 컨테이너 ID 또는 이름 |
-| `host` | string | Yes | 호스트 식별 이름 |
+| `hostid` | number | Yes | 호스트 식별 이름 |
 
 ### Response (Success)
 ```
@@ -512,24 +515,24 @@ HTTP/1.1 200 OK
 
 ---
 
-## 10. GET /stat2/:host/:id
+## 10. GET /stat2/:hostid/:id
 
 특정 호스트의 컨테이너 리소스 사용량을 조회합니다.
 
 ### Request
 ```
-GET /stat2/{host}/{id}
+GET /stat2/{hostid}/{id}
 ```
 
 ### Path Parameters
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `host` | string | Yes | 호스트 식별 이름 |
+| `hostid` | number | Yes | 호스트 식별 이름 |
 | `id` | string | Yes | 컨테이너 ID 또는 이름 |
 
 ### Example
 ```
-GET /stat2/119server/a1b2c3d4e5f6
+GET /stat2/1/a1b2c3d4e5f6
 ```
 
 ### Response
@@ -563,19 +566,19 @@ GET /stat2/119server/a1b2c3d4e5f6
 
 ---
 
-## 11. GET /stat3/:host
+## 11. GET /stat3/:hostid
 
 특정 호스트의 **모든 컨테이너** 리소스 사용량을 일괄 조회합니다.
 
 ### Request
 ```
-GET /stat3/{host}
+GET /stat3/{hostid}
 ```
 
 ### Path Parameters
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `host` | string | Yes | 호스트 식별 이름 (예: `119server`) |
+| `hostid` | number | Yes | 호스트 식별 이름 (예: `119server`) |
 
 ### Example
 ```
@@ -805,26 +808,26 @@ curl -X POST http://localhost:9083/token/renew_access \
 curl -X GET http://localhost:9083/hosts
 
 # 컨테이너 목록 조회
-curl -X GET http://localhost:9083/ps2/119server
+curl -X GET http://localhost:9083/ps2/1
 
 # 컨테이너 상세 조회
-curl -X GET http://localhost:9083/inspect2/119server/nginx-web
+curl -X GET http://localhost:9083/inspect2/1/nginx-web
 
 # 컨테이너 시작
 curl -X POST http://localhost:9083/start2 \
   -H "Content-Type: application/json" \
-  -d '{"id":"nginx-web","host":"119server"}'
+  -d '{"id":"nginx-web","hostid":1}'
 
 # 컨테이너 중지
 curl -X POST http://localhost:9083/stop2 \
   -H "Content-Type: application/json" \
-  -d '{"id":"nginx-web","host":"119server"}'
+  -d '{"id":"nginx-web","hostid":1}'
 
 # 컨테이너 리소스 사용량 조회 (단일)
-curl -X GET http://localhost:9083/stat2/119server/nginx-web
+curl -X GET http://localhost:9083/stat2/1/nginx-web
 
 # 컨테이너 리소스 사용량 조회 (전체)
-curl -X GET http://localhost:9083/stat3/119server
+curl -X GET http://localhost:9083/stat3/1
 
 # SSE 이벤트 스트림 수신
 curl -N -H "Accept: text/event-stream" http://localhost:9083/events
