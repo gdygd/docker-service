@@ -3,6 +3,7 @@ package app
 import (
 	"sync"
 
+	"docker_service/internal/config"
 	"docker_service/internal/container"
 	evt "docker_service/internal/event2"
 	"docker_service/internal/logger"
@@ -18,6 +19,7 @@ type Application struct {
 	ApiServer  *api.Server
 	PipeServer *pipe.Server
 	Gclient    *gapi.GrpcClient
+	config     *config.Config
 
 	eventServer *event.Server
 	pipeCh      chan pipeline.Message // pipe - rcp client간 데이터 전송 채널
@@ -44,32 +46,41 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 		return nil
 	}
 
-	// Pipeline Server 초기화
-	pipeCfg := pipe.Config{
-		IntervalSec: 30, // 30초 주기
-		BufferSize:  50,
-	}
-	pipesvr, err := pipe.NewServer(wg, ct.DockerMng, pipeCfg, pipeCh, evtMgr)
-	if err != nil {
-		logger.Log.Error("Pipe server initialization fail.. %v", err)
-		return nil
-	}
+	if ct.Config.OprMode != "aws" {
+		// Pipeline Server 초기화
+		pipeCfg := pipe.Config{
+			IntervalSec: 30, // 30초 주기
+			BufferSize:  50,
+		}
+		pipesvr, err := pipe.NewServer(wg, ct.DockerMng, pipeCfg, pipeCh, evtMgr)
+		if err != nil {
+			logger.Log.Error("Pipe server initialization fail.. %v", err)
+			return nil
+		}
 
-	// init grpc client
-	// gclient, err := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
-	gclient, err := gapi.NewClient(wg, ct, pipeCh, ct.Config.AwsRpcServerAddress, "agentkey...")
-	if err != nil {
-		logger.Log.Error("gRPC client initialization fail.. %v", err)
-		return nil
+		// init grpc client
+		// gclient, err := gapi.NewClient(wg, ct, pipeCh, "localhost:9190", "agentkey...")
+		gclient, err := gapi.NewClient(wg, ct, pipeCh, ct.Config.AwsRpcServerAddress, "agentkey...")
+		if err != nil {
+			logger.Log.Error("gRPC client initialization fail.. %v", err)
+			return nil
+		}
+		return &Application{
+			wg:          wg,
+			ApiServer:   apisvr,
+			PipeServer:  pipesvr,
+			Gclient:     gclient,
+			pipeCh:      pipeCh,
+			eventServer: evtsvr,
+			config:      ct.Config,
+		}
 	}
-
 	return &Application{
 		wg:          wg,
 		ApiServer:   apisvr,
-		PipeServer:  pipesvr,
-		Gclient:     gclient,
 		pipeCh:      pipeCh,
 		eventServer: evtsvr,
+		config:      ct.Config,
 	}
 }
 
@@ -79,15 +90,18 @@ func (app *Application) Start() {
 	logger.Log.Print(3, "Start API server..")
 	go app.ApiServer.Start()
 
-	// Pipeline Server 시작
-	app.wg.Add(1)
-	logger.Log.Print(3, "Start Pipe server..")
-	go app.PipeServer.Start()
+	if app.config.OprMode == "aws" {
+		// Pipeline Server 시작
+		app.wg.Add(1)
+		logger.Log.Print(3, "Start Pipe server..")
+		go app.PipeServer.Start()
 
-	// gRPC client 시작
-	app.wg.Add(1)
-	logger.Log.Print(3, "Start gRPC client..")
-	go app.Gclient.Start()
+		// gRPC client 시작
+		app.wg.Add(1)
+		logger.Log.Print(3, "Start gRPC client..")
+		go app.Gclient.Start()
+
+	}
 
 	// event server 시작
 	app.wg.Add(1)
@@ -96,15 +110,20 @@ func (app *Application) Start() {
 }
 
 func (app *Application) Shutdown() {
-	logger.Log.Print(3, "Shutdown Pipe server..")
-	app.PipeServer.Shutdown()
-	close(app.pipeCh)
+	if app.config.OprMode == "aws" {
+		logger.Log.Print(3, "Shutdown Pipe server..")
+		app.PipeServer.Shutdown()
+		close(app.pipeCh)
+
+	}
 
 	logger.Log.Print(3, "Shutdown API server..")
 	app.ApiServer.Shutdown()
 
-	logger.Log.Print(3, "Shutdown grpc client..")
-	go app.Gclient.Shutdown()
+	if app.config.OprMode == "aws" {
+		logger.Log.Print(3, "Shutdown grpc client..")
+		go app.Gclient.Shutdown()
+	}
 
 	// event server 시작
 	app.wg.Add(1)

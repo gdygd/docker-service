@@ -40,8 +40,20 @@ func NewDockerClientManager(hosts []HostConfig) (*DockerClientManager, error) {
 	}
 
 	for _, h := range hosts {
+		// raw, err := *client.Client, error
+		var raw *client.Client
+		var err error = nil
+
+		fmt.Printf("mode : %d\n", h.Mode)
+		if h.Mode == 1 {
+			raw, err = newSDKClient(h.Addr)
+			fmt.Printf("##############docker.sock\n\n")
+		} else {
+			raw, err = newSDKClientTLS(h.Addr)
+			fmt.Printf("##############docker tls\n\n")
+		}
 		// raw, err := newSDKClient(h.Addr)
-		raw, err := newSDKClientTLS(h.Addr)
+
 		if err != nil {
 			return nil, err
 		}

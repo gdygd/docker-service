@@ -12,6 +12,7 @@ type DockerHostConfig struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Addr string `json:"addr"`
+	Mode int    `json:"mode"`
 }
 
 type Config struct {
@@ -35,6 +36,7 @@ type Config struct {
 	CERT_PATH           string `mapstructure:"CERT_PATH"`
 	DOCKER_HOSTS        string `mapstructure:"DOCKER_HOSTS"` // JSON format: [{"name":"host1","addr":"tcp://..."}]
 	AwsRpcServerAddress string `mapstructure:"AWS_RPC_SERVER"`
+	OprMode             string `mapstructure:"OPR_MODE"`
 }
 
 // GetDockerHosts는 DOCKER_HOSTS JSON 문자열을 파싱하여 반환

@@ -37,3 +37,6 @@
  > 도커sdk 연결 tls, docker.sock모드 추가
  > db에 config없을 시 docker.sock으로 초기화, name은 localhost
  > db, host_info 테이블에 mode (1:docker.sock, 2:tls) 추가
+
+26.03.27
+운영모드 추가 (local, aws)

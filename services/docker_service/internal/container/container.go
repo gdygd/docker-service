@@ -73,6 +73,7 @@ func NewContainer() (*Container, error) {
 		dockerHosts = append(dockerHosts, docker.HostConfig{
 			Name: h.Name,
 			Addr: h.Addr,
+			Mode: h.Mode,
 		})
 	}
 
@@ -120,6 +121,7 @@ func initHostInfo(dbHnd db.DbHandler) string {
 			Id:   host.HostId,
 			Name: host.HostName,
 			Addr: host.HostAddress,
+			Mode: host.Mode,
 		})
 	}
 	if len(hosts) == 0 {
