@@ -47,14 +47,17 @@ jobs:
       - name: Docker push (docker-service)
         run: |
           docker push ${{ secrets.REGISTRY_URL }}/docker-service:latest
+          docker push gildong27/docker-service:latest
 
       - name: Docker push (auth-service)
         run: |
           docker push ${{ secrets.REGISTRY_URL }}/auth-service:latest
+          docker push gildong27/auth-service:latest
 
       - name: Docker push (api-gateway)
         run: |
           docker push ${{ secrets.REGISTRY_URL }}/api-gateway:latest
+          docker push gildong27/api-gateway:latest
 
       # 4️⃣ (검증) pull 테스트
       - name: Docker pull verify
@@ -66,7 +69,18 @@ jobs:
           docker pull ${{ secrets.REGISTRY_URL }}/auth-service:latest
 
           docker rmi ${{ secrets.REGISTRY_URL }}/api-gateway:latest || true
-          docker pull ${{ secrets.REGISTRY_URL }}/api-gateway:latest
+          docker pull ${{ secrets.REGISTRY_URL }}/api-gateway:latest          
+
+      - name: Docker pull verify(hub)
+        run: |
+          docker rmi gildong27/docker-service:latest || true
+          docker pull gildong27/docker-service:latest
+          
+          docker rmi gildong27/auth-service:latest || true
+          docker pull gildong27/auth-service:latest
+
+          docker rmi gildong27/api-gateway:latest || true
+          docker pull gildong27/api-gateway:latest
 
       # 5️⃣ Stop & remove existing container
       - name: Stop existing container

@@ -11,6 +11,7 @@ import (
 type HostConfig struct {
 	Name string
 	Addr string
+	Mode int // 1:docker.sock, 2:tls
 }
 
 // const certPath = "../certs/"

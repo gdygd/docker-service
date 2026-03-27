@@ -43,8 +43,8 @@ func (server *Server) stopContainer(ctx *gin.Context) {
 }
 
 type requestStartStop struct {
-	Id   string `json:"id" binding:"required"`
-	Host string `json:"host" binding:"required"`
+	Id     string `json:"id" binding:"required"`
+	HostId int    `json:"hostId" binding:"required"`
 }
 
 func (server *Server) startContainer2(ctx *gin.Context) {
@@ -54,7 +54,9 @@ func (server *Server) startContainer2(ctx *gin.Context) {
 		return
 	}
 
-	err := server.service.StartContainer2(ctx, req.Id, req.Host)
+	host, _ := server.service.ReadHostInfo(ctx, req.HostId)
+
+	err := server.service.StartContainer2(ctx, req.Id, host.HostName)
 	if err != nil {
 		logger.Log.Error("Service startContainer error.. [%v]", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
@@ -71,7 +73,9 @@ func (server *Server) stopContainer2(ctx *gin.Context) {
 		return
 	}
 
-	err := server.service.StopContainer2(ctx, req.Id, req.Host)
+	host, _ := server.service.ReadHostInfo(ctx, req.HostId)
+
+	err := server.service.StopContainer2(ctx, req.Id, host.HostName)
 	if err != nil {
 		logger.Log.Error("Service stopContainer error.. [%v]", err)
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))

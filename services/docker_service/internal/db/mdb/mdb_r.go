@@ -130,7 +130,7 @@ func (q *MariaDbHandler) ReadHost(ctx context.Context) ([]db.Host, error) {
 	ado := q.GetDB()
 
 	query := `
-	select a.host_id, a.hostname, a.host_address from host_info a
+	select a.host_id, a.hostname, a.host_address, ifnull(a.mode, 1) mode from host_info a
 	`
 
 	rows, err := ado.QueryContext(ctx, query)
@@ -148,6 +148,7 @@ func (q *MariaDbHandler) ReadHost(ctx context.Context) ([]db.Host, error) {
 			&row.HostId,
 			&row.HostName,
 			&row.HostAddress,
+			&row.Mode,
 		); err != nil {
 			logger.Log.Error("ReadHost#2 error %v", err)
 			return nil, err

@@ -45,4 +45,5 @@ type Host struct {
 	HostId      int
 	HostName    string
 	HostAddress string
+	Mode        int
 }

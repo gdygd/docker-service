@@ -44,6 +44,13 @@ func NewContainer() (*Container, error) {
 	obj := memory.InitRedisDb(config.RedisAddr)
 	container.ObjDb = obj
 
+	// init config from db
+	strconfig := initHostInfo(dbhnd)
+	container.Config.DOCKER_HOSTS = strconfig
+
+	// init databus
+	container.Bus = databus.NewDataBus()
+
 	// init docker client (docker 소켓에 연결, local host)
 	dcCli, err := docker.New()
 	if err != nil {
@@ -75,11 +82,11 @@ func NewContainer() (*Container, error) {
 	}
 	container.DockerMng = dockerMng
 
-	// init databus
-	container.Bus = databus.NewDataBus()
+	// // init databus
+	// container.Bus = databus.NewDataBus()
 
-	strconfig := initHostInfo(dbhnd)
-	container.Config.DOCKER_HOSTS = strconfig
+	// strconfig := initHostInfo(dbhnd)
+	// container.Config.DOCKER_HOSTS = strconfig
 
 	return container, nil
 }
@@ -102,6 +109,7 @@ type DockerHostConfig struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 	Addr string `json:"addr"`
+	Mode int    `json:"mode"` // 1:docker.sock, 2:tls
 }
 
 func initHostInfo(dbHnd db.DbHandler) string {
@@ -113,6 +121,16 @@ func initHostInfo(dbHnd db.DbHandler) string {
 			Name: host.HostName,
 			Addr: host.HostAddress,
 		})
+	}
+	if len(hosts) == 0 {
+		hostinfo = []DockerHostConfig{
+			{
+				Id:   1,
+				Name: "Localhost",
+				Addr: "unix:///var/run/docker.sock",
+				Mode: 1,
+			},
+		}
 	}
 	data, _ := json.Marshal(hostinfo)
 

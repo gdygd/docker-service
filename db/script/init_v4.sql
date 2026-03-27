@@ -44,10 +44,10 @@ ALTER TABLE `SESSIONS`
 CREATE TABLE `host_info` (
 	`host_id`      INT          NOT NULL, -- 호스트 ID
 	`hostname`     VARCHAR(100) NULL,     -- 호스트 명
-	`host_address` VARCHAR(256) NULL,     -- 호스트 주소
+	`host_address` VARCHAR(255) NULL,     -- 호스트 주소
+	`mode`         DECIMAL(1)   NULL,     -- 모드
 	`updated_at`   DATETIME     NULL      -- 갱신 일시
 );
-
 -- 호스트
 ALTER TABLE `host_info`
 	ADD CONSTRAINT `PK_host_info` -- 호스트 기본키

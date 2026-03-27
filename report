@@ -31,3 +31,9 @@
 -host api 수정 (host id추가)
 -config정보에서 도커호스트 정보 디비 정보로 수정
 -sse cors 중복제거
+
+26.03.26
+-도커허브 배포 작업 중
+ > 도커sdk 연결 tls, docker.sock모드 추가
+ > db에 config없을 시 docker.sock으로 초기화, name은 localhost
+ > db, host_info 테이블에 mode (1:docker.sock, 2:tls) 추가
