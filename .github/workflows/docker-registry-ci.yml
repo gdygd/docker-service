@@ -78,26 +78,23 @@ jobs:
             docker push ${{ secrets.DOCKERHUB_USERNAME }}/${svc}:${{ steps.tag.outputs.SHA }}
           done
 
-      # ── 4️⃣ 푸시 검증 (manifest 확인, pull 없이 빠르게) ───────────
+      # ── 4️⃣ 푸시 검증 ───────────────────────────────────────────
       - name: Verify pushed images (Private)
         run: |
           for svc in docker-service auth-service api-gateway; do
-            echo "▶ Checking $svc on private registry..."
-            docker manifest inspect ${{ secrets.REGISTRY_URL }}/${svc}:latest > /dev/null \
-              && echo "✅ $svc:latest OK" \
-              || (echo "❌ $svc:latest FAILED" && exit 1)
-            docker manifest inspect ${{ secrets.REGISTRY_URL }}/${svc}:${{ steps.tag.outputs.SHA }} > /dev/null \
-              && echo "✅ $svc:${{ steps.tag.outputs.SHA }} OK" \
-              || (echo "❌ $svc:${{ steps.tag.outputs.SHA }} FAILED" && exit 1)
-          done
+            echo "▶ Checking ${svc} on private registry..."
 
-      - name: Verify pushed images (Docker Hub)
-        run: |
-          for svc in docker-service auth-service api-gateway; do
-            echo "▶ Checking $svc on Docker Hub..."
-            docker manifest inspect ${{ secrets.DOCKERHUB_USERNAME }}/${svc}:latest > /dev/null \
-              && echo "✅ $svc:latest OK" \
-              || (echo "❌ $svc:latest FAILED" && exit 1)
+            # 로컬 캐시 제거 후 pull로 검증
+            docker rmi ${{ secrets.REGISTRY_URL }}/${svc}:latest 2>/dev/null || true
+            docker rmi ${{ secrets.REGISTRY_URL }}/${svc}:${{ steps.tag.outputs.SHA }} 2>/dev/null || true
+
+            docker pull ${{ secrets.REGISTRY_URL }}/${svc}:latest \
+              && echo "✅ ${svc}:latest OK" \
+              || (echo "❌ ${svc}:latest FAILED" && exit 1)
+
+            docker pull ${{ secrets.REGISTRY_URL }}/${svc}:${{ steps.tag.outputs.SHA }} \
+              && echo "✅ ${svc}:${{ steps.tag.outputs.SHA }} OK" \
+              || (echo "❌ ${svc}:${{ steps.tag.outputs.SHA }} FAILED" && exit 1)
           done
 
       # ── 5️⃣ 컨테이너 재시작 ───────────────────────────────────────
