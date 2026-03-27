@@ -1,8 +1,11 @@
-name: docker build & private registry push/pull
+name: Docker Build & Push (Private + Docker Hub)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
+
+env:
+  SERVICES: docker-service auth-service api-gateway  # 서비스 추가 시 여기만 수정
 
 jobs:
   docker-ci:
@@ -12,94 +15,105 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      # 1️⃣ Docker login
-      - name: Docker login to private registry
-        run: |
-          echo "${{ secrets.REGISTRY_PASSWORD }}" | \
-          docker login https://${{ secrets.REGISTRY_URL }} \
-            --username ${{ secrets.REGISTRY_USER }} \
-            --password-stdin
+      # ── Git SHA 태그 생성 (앞 7자리) ──────────────────────────────
+      - name: Set image tag
+        id: tag
+        run: echo "SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-      # 2️⃣ Docker build 
-      # (docker-service)
-      - name: Docker build(docker-service)
+      # ── 1️⃣ 로그인 ────────────────────────────────────────────────
+      # https:// 없이 REGISTRY_URL만 사용 (도메인:포트 형식 권장)
+      - name: Login to Private Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_URL }}
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ── 2️⃣ 빌드 ─────────────────────────────────────────────────
+      - name: Build docker-service
         run: |
           docker build \
-            -t docker-service:latest \
             -t ${{ secrets.REGISTRY_URL }}/docker-service:latest \
+            -t ${{ secrets.REGISTRY_URL }}/docker-service:${{ steps.tag.outputs.SHA }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/docker-service:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/docker-service:${{ steps.tag.outputs.SHA }} \
             ./services/docker_service
-      
-      - name: Docker build(auth-service)
+
+      - name: Build auth-service
         run: |
           docker build \
-            -t auth-service:latest \
             -t ${{ secrets.REGISTRY_URL }}/auth-service:latest \
+            -t ${{ secrets.REGISTRY_URL }}/auth-service:${{ steps.tag.outputs.SHA }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/auth-service:${{ steps.tag.outputs.SHA }} \
             ./services/auth_service
 
-      - name: Docker build(api-gateway)
+      - name: Build api-gateway
         run: |
           docker build \
-            -t api-gateway:latest \
             -t ${{ secrets.REGISTRY_URL }}/api-gateway:latest \
+            -t ${{ secrets.REGISTRY_URL }}/api-gateway:${{ steps.tag.outputs.SHA }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:latest \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/api-gateway:${{ steps.tag.outputs.SHA }} \
             ./services/api-gateway
 
-      # 3️⃣ Docker push
-      - name: Docker push (docker-service)
+      # ── 3️⃣ 푸시 ─────────────────────────────────────────────────
+      - name: Push to Private Registry
         run: |
-          docker push ${{ secrets.REGISTRY_URL }}/docker-service:latest
-          docker push gildong27/docker-service:latest
+          for svc in docker-service auth-service api-gateway; do
+            docker push ${{ secrets.REGISTRY_URL }}/${svc}:latest
+            docker push ${{ secrets.REGISTRY_URL }}/${svc}:${{ steps.tag.outputs.SHA }}
+          done
 
-      - name: Docker push (auth-service)
+      - name: Push to Docker Hub
         run: |
-          docker push ${{ secrets.REGISTRY_URL }}/auth-service:latest
-          docker push gildong27/auth-service:latest
+          for svc in docker-service auth-service api-gateway; do
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${svc}:latest
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${svc}:${{ steps.tag.outputs.SHA }}
+          done
 
-      - name: Docker push (api-gateway)
+      # ── 4️⃣ 푸시 검증 (manifest 확인, pull 없이 빠르게) ───────────
+      - name: Verify pushed images (Private)
         run: |
-          docker push ${{ secrets.REGISTRY_URL }}/api-gateway:latest
-          docker push gildong27/api-gateway:latest
+          for svc in docker-service auth-service api-gateway; do
+            echo "▶ Checking $svc on private registry..."
+            docker manifest inspect ${{ secrets.REGISTRY_URL }}/${svc}:latest > /dev/null \
+              && echo "✅ $svc:latest OK" \
+              || (echo "❌ $svc:latest FAILED" && exit 1)
+            docker manifest inspect ${{ secrets.REGISTRY_URL }}/${svc}:${{ steps.tag.outputs.SHA }} > /dev/null \
+              && echo "✅ $svc:${{ steps.tag.outputs.SHA }} OK" \
+              || (echo "❌ $svc:${{ steps.tag.outputs.SHA }} FAILED" && exit 1)
+          done
 
-      # 4️⃣ (검증) pull 테스트
-      - name: Docker pull verify
+      - name: Verify pushed images (Docker Hub)
         run: |
-          docker rmi ${{ secrets.REGISTRY_URL }}/docker-service:latest || true
-          docker pull ${{ secrets.REGISTRY_URL }}/docker-service:latest
-          
-          docker rmi ${{ secrets.REGISTRY_URL }}/auth-service:latest || true
-          docker pull ${{ secrets.REGISTRY_URL }}/auth-service:latest
+          for svc in docker-service auth-service api-gateway; do
+            echo "▶ Checking $svc on Docker Hub..."
+            docker manifest inspect ${{ secrets.DOCKERHUB_USERNAME }}/${svc}:latest > /dev/null \
+              && echo "✅ $svc:latest OK" \
+              || (echo "❌ $svc:latest FAILED" && exit 1)
+          done
 
-          docker rmi ${{ secrets.REGISTRY_URL }}/api-gateway:latest || true
-          docker pull ${{ secrets.REGISTRY_URL }}/api-gateway:latest          
-
-      - name: Docker pull verify(hub)
+      # ── 5️⃣ 컨테이너 재시작 ───────────────────────────────────────
+      - name: Stop & remove existing containers
         run: |
-          docker rmi gildong27/docker-service:latest || true
-          docker pull gildong27/docker-service:latest
-          
-          docker rmi gildong27/auth-service:latest || true
-          docker pull gildong27/auth-service:latest
+          for svc in docker-service auth-service api-gateway; do
+            docker stop ${svc} 2>/dev/null || true
+            docker rm   ${svc} 2>/dev/null || true
+          done
 
-          docker rmi gildong27/api-gateway:latest || true
-          docker pull gildong27/api-gateway:latest
-
-      # 5️⃣ Stop & remove existing container
-      - name: Stop existing container
-        run: |
-          docker stop docker-service || true
-          docker rm docker-service || true
-
-          docker stop auth-service || true
-          docker rm auth-service || true
-
-          docker stop api-gateway || true
-          docker rm api-gateway || true
-
-      # # 6️⃣ Run new container 🚀
+      # ── 6️⃣ 새 컨테이너 실행 (필요 시 주석 해제) ──────────────────
       # - name: Run docker-service
       #   run: |
-          # docker run -d \
-          #   --name docker-service \
-          #   -p 9083:9083 \
-          #   -v /home/gildong/work/go/src/docker_mng/docker_service/certs:/certs:ro \
-          #   --restart unless-stopped \
-          #   ${{ secrets.REGISTRY_URL }}/docker-service:latest
+      #     docker run -d \
+      #       --name docker-service \
+      #       -p 9083:9083 \
+      #       -v /home/gildong/work/go/src/docker_mng/docker_service/certs:/certs:ro \
+      #       --restart unless-stopped \
+      #       ${{ secrets.REGISTRY_URL }}/docker-service:${{ steps.tag.outputs.SHA }}

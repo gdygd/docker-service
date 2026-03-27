@@ -1,0 +1,91 @@
+name: docker build & private registry push/pull
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  docker-ci:
+    runs-on: [self-hosted, docker]
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      # 1️⃣ Docker login
+      - name: Docker login to private registry
+        run: |
+          echo "${{ secrets.REGISTRY_PASSWORD }}" | \
+          docker login https://${{ secrets.REGISTRY_URL }} \
+            --username ${{ secrets.REGISTRY_USER }} \
+            --password-stdin
+
+      # 2️⃣ Docker build 
+      # (docker-service)
+      - name: Docker build(docker-service)
+        run: |
+          docker build \
+            -t docker-service:latest \
+            -t ${{ secrets.REGISTRY_URL }}/docker-service:latest \
+            ./services/docker_service
+      
+      - name: Docker build(auth-service)
+        run: |
+          docker build \
+            -t auth-service:latest \
+            -t ${{ secrets.REGISTRY_URL }}/auth-service:latest \
+            ./services/auth_service
+
+      - name: Docker build(api-gateway)
+        run: |
+          docker build \
+            -t api-gateway:latest \
+            -t ${{ secrets.REGISTRY_URL }}/api-gateway:latest \
+            ./services/api-gateway
+
+      # 3️⃣ Docker push
+      - name: Docker push (docker-service)
+        run: |
+          docker push ${{ secrets.REGISTRY_URL }}/docker-service:latest
+
+      - name: Docker push (auth-service)
+        run: |
+          docker push ${{ secrets.REGISTRY_URL }}/auth-service:latest
+
+      - name: Docker push (api-gateway)
+        run: |
+          docker push ${{ secrets.REGISTRY_URL }}/api-gateway:latest
+
+      # 4️⃣ (검증) pull 테스트
+      - name: Docker pull verify
+        run: |
+          docker rmi ${{ secrets.REGISTRY_URL }}/docker-service:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/docker-service:latest
+          
+          docker rmi ${{ secrets.REGISTRY_URL }}/auth-service:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/auth-service:latest
+
+          docker rmi ${{ secrets.REGISTRY_URL }}/api-gateway:latest || true
+          docker pull ${{ secrets.REGISTRY_URL }}/api-gateway:latest
+
+      # 5️⃣ Stop & remove existing container
+      - name: Stop existing container
+        run: |
+          docker stop docker-service || true
+          docker rm docker-service || true
+
+          docker stop auth-service || true
+          docker rm auth-service || true
+
+          docker stop api-gateway || true
+          docker rm api-gateway || true
+
+      # # 6️⃣ Run new container 🚀
+      # - name: Run docker-service
+      #   run: |
+          # docker run -d \
+          #   --name docker-service \
+          #   -p 9083:9083 \
+          #   -v /home/gildong/work/go/src/docker_mng/docker_service/certs:/certs:ro \
+          #   --restart unless-stopped \
+          #   ${{ secrets.REGISTRY_URL }}/docker-service:latest
