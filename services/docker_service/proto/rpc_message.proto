@@ -12,14 +12,15 @@ message Hello {
 }
 
 message AgentMessage {
-    string agent_key = 1;
-    DataType type = 2;
-    string host = 3;
-    int64 timestamp = 4;
+    int32 agentid = 1;
+    string agent_key = 2;
+    DataType type = 3;
+    string host = 4;
+    int64 timestamp = 5;
     oneof data {
-        ContainerListData list_data = 10;
-        ContainerInspectData inspect_data = 11;
-        ContainerStatsData stats_data = 12;
-        ContainerEventData event_data = 13;
+        ContainerListData list_data = 11;
+        ContainerInspectData inspect_data = 12;
+        ContainerStatsData stats_data = 13;
+        ContainerEventData event_data = 14;
     }
 }

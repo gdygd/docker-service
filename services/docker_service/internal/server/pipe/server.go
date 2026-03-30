@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"docker_service/internal/config"
 	"docker_service/internal/docker"
 	"docker_service/internal/event2"
 	evt "docker_service/internal/event2"
@@ -20,6 +21,7 @@ type Server struct {
 	wg      *sync.WaitGroup
 	manager *collector.Manager
 	config  Config
+	config2 *config.Config
 	// sendCh  chan<- pipeline.Message // write only
 	sendCh   chan pipeline.Message
 	eventMgr *evt.EventManager
@@ -43,6 +45,7 @@ func DefaultConfig() Config {
 func NewServer(wg *sync.WaitGroup,
 	dockerMng *docker.DockerClientManager,
 	cfg Config,
+	config *config.Config,
 	pipeCh chan pipeline.Message,
 	eventMgr *evt.EventManager,
 ) (*Server, error) {
@@ -71,6 +74,7 @@ func NewServer(wg *sync.WaitGroup,
 		wg:       wg,
 		manager:  manager,
 		config:   cfg,
+		config2:  config,
 		sendCh:   pipeCh,
 		eventMgr: eventMgr,
 	}, nil
@@ -122,8 +126,12 @@ func (s *Server) processMessages(outCh <-chan pipeline.Message) {
 // handleMessage 개별 메시지 처리
 func (s *Server) handleMessage(msg pipeline.Message) {
 	// TODO: gRPC Sender로 전송
-	logger.Log.Print(3, "[PipeServer] type=%s host=%s timestamp=%v",
-		msg.Type, msg.Host, msg.Timestamp)
+
+	// agent id
+	msg.AgentId = s.config2.AgentId
+
+	logger.Log.Print(3, "[PipeServer] agentid : %d type=%s host=%s timestamp=%v",
+		msg.AgentId, msg.Type, msg.Host, msg.Timestamp)
 
 	// switch msg.Type {
 	// case pipeline.DataTypeList:

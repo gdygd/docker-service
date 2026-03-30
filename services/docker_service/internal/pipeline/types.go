@@ -14,6 +14,7 @@ const (
 
 // Message 파이프라인 통합 메시지 포맷
 type Message struct {
+	AgentId   int         `json:"agentid"`
 	Type      DataType    `json:"type"`
 	Host      string      `json:"host"` // Docker 호스트명
 	Timestamp time.Time   `json:"timestamp"`

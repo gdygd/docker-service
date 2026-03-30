@@ -10,6 +10,7 @@ import (
 // ConvertToAgentMessage converts pipeline.Message to pb.AgentMessage for DataStream transmission.
 func ConvertToAgentMessage(msg pipeline.Message, agentKey string) (*pb.AgentMessage, error) {
 	pbMsg := &pb.AgentMessage{
+		Agentid:   int32(msg.AgentId),
 		AgentKey:  agentKey,
 		Type:      convertDataType(msg.Type),
 		Host:      msg.Host,

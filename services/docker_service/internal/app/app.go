@@ -52,7 +52,7 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 			IntervalSec: 30, // 30초 주기
 			BufferSize:  50,
 		}
-		pipesvr, err := pipe.NewServer(wg, ct.DockerMng, pipeCfg, pipeCh, evtMgr)
+		pipesvr, err := pipe.NewServer(wg, ct.DockerMng, pipeCfg, ct.Config, pipeCh, evtMgr)
 		if err != nil {
 			logger.Log.Error("Pipe server initialization fail.. %v", err)
 			return nil

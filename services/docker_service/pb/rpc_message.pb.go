@@ -68,10 +68,11 @@ func (x *Hello) GetMsg() string {
 
 type AgentMessage struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
-	AgentKey  string                 `protobuf:"bytes,1,opt,name=agent_key,json=agentKey,proto3" json:"agent_key,omitempty"`
-	Type      DataType               `protobuf:"varint,2,opt,name=type,proto3,enum=pb.DataType" json:"type,omitempty"`
-	Host      string                 `protobuf:"bytes,3,opt,name=host,proto3" json:"host,omitempty"`
-	Timestamp int64                  `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Agentid   int32                  `protobuf:"varint,1,opt,name=agentid,proto3" json:"agentid,omitempty"`
+	AgentKey  string                 `protobuf:"bytes,2,opt,name=agent_key,json=agentKey,proto3" json:"agent_key,omitempty"`
+	Type      DataType               `protobuf:"varint,3,opt,name=type,proto3,enum=pb.DataType" json:"type,omitempty"`
+	Host      string                 `protobuf:"bytes,4,opt,name=host,proto3" json:"host,omitempty"`
+	Timestamp int64                  `protobuf:"varint,5,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
 	// Types that are valid to be assigned to Data:
 	//
 	//	*AgentMessage_ListData
@@ -111,6 +112,13 @@ func (x *AgentMessage) ProtoReflect() protoreflect.Message {
 // Deprecated: Use AgentMessage.ProtoReflect.Descriptor instead.
 func (*AgentMessage) Descriptor() ([]byte, []int) {
 	return file_rpc_message_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AgentMessage) GetAgentid() int32 {
+	if x != nil {
+		return x.Agentid
+	}
+	return 0
 }
 
 func (x *AgentMessage) GetAgentKey() string {
@@ -189,19 +197,19 @@ type isAgentMessage_Data interface {
 }
 
 type AgentMessage_ListData struct {
-	ListData *ContainerListData `protobuf:"bytes,10,opt,name=list_data,json=listData,proto3,oneof"`
+	ListData *ContainerListData `protobuf:"bytes,11,opt,name=list_data,json=listData,proto3,oneof"`
 }
 
 type AgentMessage_InspectData struct {
-	InspectData *ContainerInspectData `protobuf:"bytes,11,opt,name=inspect_data,json=inspectData,proto3,oneof"`
+	InspectData *ContainerInspectData `protobuf:"bytes,12,opt,name=inspect_data,json=inspectData,proto3,oneof"`
 }
 
 type AgentMessage_StatsData struct {
-	StatsData *ContainerStatsData `protobuf:"bytes,12,opt,name=stats_data,json=statsData,proto3,oneof"`
+	StatsData *ContainerStatsData `protobuf:"bytes,13,opt,name=stats_data,json=statsData,proto3,oneof"`
 }
 
 type AgentMessage_EventData struct {
-	EventData *ContainerEventData `protobuf:"bytes,13,opt,name=event_data,json=eventData,proto3,oneof"`
+	EventData *ContainerEventData `protobuf:"bytes,14,opt,name=event_data,json=eventData,proto3,oneof"`
 }
 
 func (*AgentMessage_ListData) isAgentMessage_Data() {}
@@ -218,19 +226,19 @@ const file_rpc_message_proto_rawDesc = "" +
 	"\n" +
 	"\x11rpc_message.proto\x12\x02pb\x1a\x17container_message.proto\"\x19\n" +
 	"\x05Hello\x12\x10\n" +
-	"\x03msg\x18\x01 \x01(\tR\x03msg\"\xee\x02\n" +
-	"\fAgentMessage\x12\x1b\n" +
-	"\tagent_key\x18\x01 \x01(\tR\bagentKey\x12 \n" +
-	"\x04type\x18\x02 \x01(\x0e2\f.pb.DataTypeR\x04type\x12\x12\n" +
-	"\x04host\x18\x03 \x01(\tR\x04host\x12\x1c\n" +
-	"\ttimestamp\x18\x04 \x01(\x03R\ttimestamp\x124\n" +
-	"\tlist_data\x18\n" +
-	" \x01(\v2\x15.pb.ContainerListDataH\x00R\blistData\x12=\n" +
-	"\finspect_data\x18\v \x01(\v2\x18.pb.ContainerInspectDataH\x00R\vinspectData\x127\n" +
+	"\x03msg\x18\x01 \x01(\tR\x03msg\"\x88\x03\n" +
+	"\fAgentMessage\x12\x18\n" +
+	"\aagentid\x18\x01 \x01(\x05R\aagentid\x12\x1b\n" +
+	"\tagent_key\x18\x02 \x01(\tR\bagentKey\x12 \n" +
+	"\x04type\x18\x03 \x01(\x0e2\f.pb.DataTypeR\x04type\x12\x12\n" +
+	"\x04host\x18\x04 \x01(\tR\x04host\x12\x1c\n" +
+	"\ttimestamp\x18\x05 \x01(\x03R\ttimestamp\x124\n" +
+	"\tlist_data\x18\v \x01(\v2\x15.pb.ContainerListDataH\x00R\blistData\x12=\n" +
+	"\finspect_data\x18\f \x01(\v2\x18.pb.ContainerInspectDataH\x00R\vinspectData\x127\n" +
 	"\n" +
-	"stats_data\x18\f \x01(\v2\x16.pb.ContainerStatsDataH\x00R\tstatsData\x127\n" +
+	"stats_data\x18\r \x01(\v2\x16.pb.ContainerStatsDataH\x00R\tstatsData\x127\n" +
 	"\n" +
-	"event_data\x18\r \x01(\v2\x16.pb.ContainerEventDataH\x00R\teventDataB\x06\n" +
+	"event_data\x18\x0e \x01(\v2\x16.pb.ContainerEventDataH\x00R\teventDataB\x06\n" +
 	"\x04dataB\x13Z\x11docker_service/pbb\x06proto3"
 
 var (
