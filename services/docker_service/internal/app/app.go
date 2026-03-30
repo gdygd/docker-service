@@ -46,7 +46,7 @@ func NewApplication(ct *container.Container, ch_terminate chan bool) *Applicatio
 		return nil
 	}
 
-	if ct.Config.OprMode != "aws" {
+	if ct.Config.OprMode == "aws" {
 		// Pipeline Server 초기화
 		pipeCfg := pipe.Config{
 			IntervalSec: 30, // 30초 주기
