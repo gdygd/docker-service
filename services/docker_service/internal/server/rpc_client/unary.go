@@ -40,7 +40,7 @@ func (c *GrpcClient) ContainerState(req *pb.AgentMessage) (*pb.ServerMessage, er
 }
 
 func (c *GrpcClient) ContainerInfo(req *pb.AgentMessage) (*pb.ServerMessage, error) {
-	logger.Log.Print(2, "ContainerInfo..")
+	logger.Log.Print(1, "ContainerInfo..")
 	client, err := c.newServiceClient()
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *GrpcClient) ContainerInfo(req *pb.AgentMessage) (*pb.ServerMessage, err
 }
 
 func (c *GrpcClient) ContainerInspect(req *pb.AgentMessage) (*pb.ServerMessage, error) {
-	logger.Log.Print(2, "ContainerInspect..")
+	logger.Log.Print(1, "ContainerInspect..")
 	client, err := c.newServiceClient()
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (c *GrpcClient) ContainerInspect(req *pb.AgentMessage) (*pb.ServerMessage, 
 }
 
 func (c *GrpcClient) ContainerStats(req *pb.AgentMessage) (*pb.ServerMessage, error) {
-	logger.Log.Print(2, "ContainerStats..")
+	logger.Log.Print(1, "ContainerStats..")
 	client, err := c.newServiceClient()
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (c *GrpcClient) ContainerStats(req *pb.AgentMessage) (*pb.ServerMessage, er
 }
 
 func (c *GrpcClient) ContainerEvent(req *pb.AgentMessage) (*pb.ServerMessage, error) {
-	logger.Log.Print(2, "ContainerEvent..")
+	logger.Log.Print(1, "ContainerEvent..")
 	client, err := c.newServiceClient()
 	if err != nil {
 		return nil, err

@@ -2,20 +2,31 @@ package gapi
 
 import (
 	"context"
-	"docker_service/internal/container"
-	"docker_service/internal/logger"
-	"docker_service/internal/pipeline"
-	"docker_service/pb"
 	"fmt"
 	"log"
 	"sync"
 	"time"
+
+	"docker_service/internal/container"
+	"docker_service/internal/logger"
+	"docker_service/internal/pipeline"
+	"docker_service/pb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 )
+
+// ClientOption is a functional option for GrpcClient.
+type ClientOption func(*GrpcClient)
+
+// WithUnaryInterceptor attaches an additional unary interceptor (e.g. for metrics).
+func WithUnaryInterceptor(i grpc.UnaryClientInterceptor) ClientOption {
+	return func(c *GrpcClient) {
+		c.extraInterceptor = i
+	}
+}
 
 type GrpcClient struct {
 	wg     *sync.WaitGroup
@@ -25,13 +36,14 @@ type GrpcClient struct {
 	cancel context.CancelFunc
 	mu     sync.RWMutex
 
-	addr     string
-	agentKey string
-	ct       *container.Container
-	pipeCh   <-chan pipeline.Message
+	addr             string
+	agentKey         string
+	ct               *container.Container
+	pipeCh           <-chan pipeline.Message
+	extraInterceptor grpc.UnaryClientInterceptor
 }
 
-func NewClient(wg *sync.WaitGroup, ct *container.Container, pipeCh <-chan pipeline.Message, addr string, agentKey string) (*GrpcClient, error) {
+func NewClient(wg *sync.WaitGroup, ct *container.Container, pipeCh <-chan pipeline.Message, addr string, agentKey string, opts ...ClientOption) (*GrpcClient, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := &GrpcClient{
 		wg:       wg,
@@ -41,6 +53,9 @@ func NewClient(wg *sync.WaitGroup, ct *container.Container, pipeCh <-chan pipeli
 		pipeCh:   pipeCh,
 		addr:     addr,
 		agentKey: agentKey,
+	}
+	for _, opt := range opts {
+		opt(c)
 	}
 
 	if err := c.connect(); err != nil {
@@ -55,10 +70,15 @@ func (c *GrpcClient) connect() error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	unaryInterceptors := []grpc.UnaryClientInterceptor{c.agentKeyUnaryInterceptor()}
+	if c.extraInterceptor != nil {
+		unaryInterceptors = append(unaryInterceptors, c.extraInterceptor)
+	}
+
 	conn, err := grpc.NewClient(
 		c.addr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithUnaryInterceptor(c.agentKeyUnaryInterceptor()),
+		grpc.WithChainUnaryInterceptor(unaryInterceptors...),
 		grpc.WithStreamInterceptor(c.agentKeyStreamInterceptor()),
 	)
 	if err != nil {
@@ -156,9 +176,9 @@ func (c *GrpcClient) Start() {
 				stateMu.Unlock()
 				done <- struct{}{}
 			}()
-			logger.Log.Print(2, "[%s] started", name)
+			logger.Log.Print(1, "[%s] started", name)
 			fn(txrxCtx)
-			logger.Log.Print(2, "[%s] exited", name)
+			logger.Log.Print(1, "[%s] exited", name)
 		}()
 	}
 

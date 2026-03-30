@@ -47,3 +47,8 @@
 26.03.30 #2
 - proto메세지에 agentid 추가 (app.env에서 agentid 설정)
  > rpc전송시 agentid set하고 전송
+
+
+26.03.30 #3
+- loattest 추가
+ 

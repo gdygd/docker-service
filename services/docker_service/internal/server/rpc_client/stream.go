@@ -2,11 +2,12 @@ package gapi
 
 import (
 	"context"
+	"io"
+	"time"
+
 	"docker_service/internal/logger"
 	"docker_service/internal/pipeline"
 	"docker_service/pb"
-	"io"
-	"time"
 
 	"github.com/gdygd/goglib/databus"
 	"google.golang.org/grpc/connectivity"
@@ -18,7 +19,7 @@ func (c *GrpcClient) manageConnect(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Log.Print(2, "[manageConnect] exiting")
+			logger.Log.Print(1, "[manageConnect] exiting")
 			return
 		default:
 		}
@@ -37,13 +38,13 @@ func (c *GrpcClient) manageConnect(ctx context.Context) {
 		// stream이 없으면 서버 상태와 무관하게 생성 시도
 		// 서버가 내려가 있으면 실패하고 재시도, 올라오면 성공한다.
 		if c.getStream() == nil {
-			logger.Log.Print(2, "[manageConnect] no stream, attempting createStream..")
+			logger.Log.Print(1, "[manageConnect] no stream, attempting createStream..")
 			if err := c.createStream(); err != nil {
 				logger.Log.Warn("[manageConnect] createStream failed (retry in 3s): %v", err)
 				time.Sleep(3 * time.Second)
 				continue
 			}
-			logger.Log.Print(2, "[manageConnect] stream created")
+			logger.Log.Print(1, "[manageConnect] stream created")
 		}
 
 		time.Sleep(time.Second)
@@ -55,7 +56,7 @@ func (c *GrpcClient) txRoutine(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Log.Print(2, "[txRoutine] exiting")
+			logger.Log.Print(1, "[txRoutine] exiting")
 			c.closeSend()
 			return
 
@@ -150,7 +151,7 @@ func (c *GrpcClient) rxRoutine(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Log.Print(2, "[rxRoutine] exiting")
+			logger.Log.Print(1, "[rxRoutine] exiting")
 			return
 		default:
 		}
@@ -178,7 +179,7 @@ func (c *GrpcClient) rxRoutine(ctx context.Context) {
 			return
 		}
 
-		logger.Log.Print(2, "recv : %v", resp)
+		logger.Log.Print(1, "recv : %v", resp)
 		// c.handleServerMessage(resp)
 	}
 }
