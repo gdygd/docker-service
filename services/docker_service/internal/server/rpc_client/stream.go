@@ -143,7 +143,9 @@ func (c *GrpcClient) sendUnary(msg pipeline.Message) {
 		return
 	}
 
-	c.handleServerMessage(resp)
+	_ = resp
+	// 아래는 필요시
+	// c.handleServerMessage(resp)
 }
 
 // rxRoutine: DataStream에서 ServerMessage를 수신하여 databus에 발행

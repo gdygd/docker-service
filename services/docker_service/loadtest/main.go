@@ -22,6 +22,8 @@ go build -o loadtest ./
 	  -rampup 30s \
 	  -rate-ms 500 \
 	  -containers 5
+
+	  ./loadtest -addr 10.1.0.119:19192 -agents 1000 -duration 5m -rampup 30s -rate-ms 500 -containers 5
 */
 func main() {
 	addr := flag.String("addr", "10.1.0.119:19192", "gRPC server address")

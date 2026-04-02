@@ -138,10 +138,13 @@ func (g *Generator) genEvent() pipeline.ContainerEvent {
 
 // containerID generates a deterministic-looking 64-char hex container ID.
 func (g *Generator) containerID(ctIdx int) string {
-	return fmt.Sprintf("%016x%016x%016x%016x",
+	// return fmt.Sprintf("%016x%016x%016x%016x",
+	// 	uint64(g.agentId)<<32|uint64(ctIdx),
+	// 	g.rng.Uint64(),
+	// 	g.rng.Uint64(),
+	// 	g.rng.Uint64(),
+	// )
+	return fmt.Sprintf("%016x",
 		uint64(g.agentId)<<32|uint64(ctIdx),
-		g.rng.Uint64(),
-		g.rng.Uint64(),
-		g.rng.Uint64(),
 	)
 }
