@@ -22,7 +22,7 @@ FROM alpine:3.19
 
 WORKDIR /app
 
-RUN mkdir -p /app/log
+RUN mkdir -p /app/log /app/wwwroot
 
 
 COPY --from=builder /app/app .

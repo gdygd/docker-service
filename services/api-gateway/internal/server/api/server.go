@@ -1,12 +1,6 @@
 package api
 
 import (
-	"api-gateway/internal/config"
-	"api-gateway/internal/container"
-	"api-gateway/internal/db"
-	"api-gateway/internal/logger"
-	"api-gateway/internal/memory"
-	"api-gateway/internal/service"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -18,6 +12,13 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"api-gateway/internal/config"
+	"api-gateway/internal/container"
+	"api-gateway/internal/db"
+	"api-gateway/internal/logger"
+	"api-gateway/internal/memory"
+	"api-gateway/internal/service"
 
 	apiserv "api-gateway/internal/service/api"
 
@@ -236,6 +237,14 @@ func (server *Server) setupRouter() {
 		logger.Log.Print(2, "dockersse path : %s", c.Request.URL.Path)
 		proxy.ServeHTTP(c.Writer, c.Request)
 	})
+
+	// // spa
+	// spa := spaHandler{
+	// 	staticPath: "wwwroot",
+	// 	indexPath:  "index.html",
+	// }
+
+	// router.NoRoute(spa.ServeHTTP)
 
 	server.router = router
 }
