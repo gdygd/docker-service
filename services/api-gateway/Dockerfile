@@ -33,4 +33,4 @@ COPY cmd/app.env ./app.env
 EXPOSE 9081 5173
 
 # 실행
-ENTRYPOINT ["./app"]
+ENTRYPOINT ["./app -MODE=1"]

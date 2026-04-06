@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"auth-service/internal/db"
+	"auth-service/internal/logger"
 )
 
 func (q *MariaDbHandler) ReadSysdate(ctx context.Context) (string, error) {
@@ -52,6 +53,7 @@ func (q *MariaDbHandler) ReadUser(ctx context.Context, username string) (db.User
 
 	rows, err := ado.QueryContext(ctx, query, username)
 	if err != nil {
+		logger.Log.Error("ReadUser #1 err : %v", err)
 		return db.User{}, err
 	}
 	defer rows.Close()
@@ -65,13 +67,16 @@ func (q *MariaDbHandler) ReadUser(ctx context.Context, username string) (db.User
 			&u.PasswordChangedAt,
 			&u.CreatedAt,
 		); err != nil {
+			logger.Log.Error("ReadUser #2 err : %v", err)
 			return db.User{}, err
 		}
 	}
 	if err := rows.Close(); err != nil {
+		logger.Log.Error("ReadUser #3 err : %v", err)
 		return db.User{}, err
 	}
 	if err := rows.Err(); err != nil {
+		logger.Log.Error("ReadUser #4 err : %v", err)
 		return db.User{}, err
 	}
 

@@ -1,12 +1,14 @@
 package container
 
 import (
+	"fmt"
+	"time"
+
 	"api-gateway/internal/config"
 	"api-gateway/internal/db"
 	"api-gateway/internal/db/mdb"
 	"api-gateway/internal/logger"
 	"api-gateway/internal/memory"
-	"fmt"
 )
 
 type Container struct {
@@ -51,9 +53,21 @@ func initConfig() (config.Config, error) {
 
 func initDatabase(config config.Config) db.DbHandler {
 	mdb := mdb.NewMdbHandler(config.DBUser, config.DBPasswd, config.DBSName, config.DBAddress, config.DBPort)
-	err := mdb.Init()
-	if err != nil {
-		logger.Log.Error("Db Init err.. %v", err)
+
+	for i := 0; i < 10; i++ {
+		err := mdb.Init()
+		if err != nil {
+			logger.Log.Error("Db Init err.. (%d)%v", i, err)
+		} else {
+			logger.Log.Print(3, "Db init OK!")
+			break
+		}
+		time.Sleep(2 * time.Second)
 	}
+
+	// err := mdb.Init()
+	// if err != nil {
+	// 	logger.Log.Error("Db Init err.. %v", err)
+	// }
 	return mdb
 }

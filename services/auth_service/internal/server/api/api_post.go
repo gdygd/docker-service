@@ -1,13 +1,14 @@
 package api
 
 import (
-	"auth-service/internal/db"
-	"auth-service/internal/logger"
-	"auth-service/internal/util"
 	"database/sql"
 	"fmt"
 	"net/http"
 	"time"
+
+	"auth-service/internal/db"
+	"auth-service/internal/logger"
+	"auth-service/internal/util"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -69,12 +70,16 @@ func (server *Server) loginUser(ctx *gin.Context) {
 		return
 	}
 
+	logger.Log.Print(2, "loginUser #2 %v", req)
+
 	user, err := server.service.LoginUser(ctx, req.Username)
 	if err != nil {
 		logger.Log.Print(2, "loginUser #3 err %v", err)
 		ctx.JSON(http.StatusInternalServerError, ErrorResponse(err.Error()))
 		return
 	}
+
+	logger.Log.Print(2, "loginUser #3 %v", req)
 
 	err = util.CheckPassword(req.Password, user.HashedPassword)
 	if err != nil {
