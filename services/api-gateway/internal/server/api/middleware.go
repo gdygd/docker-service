@@ -27,6 +27,7 @@ func authMiddleware(tokenMaker token.Maker) gin.HandlerFunc {
 
 		if strings.HasPrefix(path, "/auth/login") ||
 			strings.HasPrefix(path, "/auth/refresh") ||
+			strings.HasPrefix(path, "/") ||
 			strings.HasPrefix(path, "/docker-sse/events") ||
 			strings.HasPrefix(path, "/public") {
 			ctx.Next()
