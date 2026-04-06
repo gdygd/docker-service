@@ -238,13 +238,13 @@ func (server *Server) setupRouter() {
 		proxy.ServeHTTP(c.Writer, c.Request)
 	})
 
-	// // spa
-	// spa := spaHandler{
-	// 	staticPath: "wwwroot",
-	// 	indexPath:  "index.html",
-	// }
+	// spa
+	spa := spaHandler{
+		staticPath: "wwwroot",
+		indexPath:  "index.html",
+	}
 
-	// router.NoRoute(spa.ServeHTTP)
+	router.NoRoute(spa.ServeHTTP)
 
 	server.router = router
 }
