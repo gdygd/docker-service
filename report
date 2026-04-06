@@ -63,3 +63,4 @@
 26.04.06
 - api gateway에 "/" url 미들웨어 에서 제외
 - spa 라우트 활성화
+- db init retry 추가
