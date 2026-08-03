@@ -4,7 +4,7 @@ CREATE DATABASE IF NOT EXISTS `docker` CHARACTER SET utf8mb4 COLLATE utf8mb4_uni
 USE `docker`;
 
 -- 사용자
-CREATE TABLE `USERS` (
+CREATE TABLE `users` (
 	`username`            VARCHAR(100) NOT NULL, -- 사용자ID
 	`hashed_password`     VARCHAR(256) NULL,     -- 해시 비밀번호
 	`full_name`           VARCHAR(100) NULL,     -- 사용자이름
@@ -15,14 +15,14 @@ CREATE TABLE `USERS` (
 );
 
 -- 사용자
-ALTER TABLE `USERS`
-	ADD CONSTRAINT `PK_USERS` -- 사용자 기본키
+ALTER TABLE `users`
+	ADD CONSTRAINT `PK_users` -- 사용자 기본키
 	PRIMARY KEY (
 	    `username` -- 사용자ID
 	);
 
 -- 세션
-CREATE TABLE `SESSIONS` (
+CREATE TABLE `sessions` (
 	`id`            VARCHAR(255) NOT NULL, -- ID
 	`username`      VARCHAR(100) NULL,     -- 사용자ID
 	`refresh_token` VARCHAR(512) NULL,     -- 리프레시 토큰
@@ -34,8 +34,8 @@ CREATE TABLE `SESSIONS` (
 );
 
 -- 세션
-ALTER TABLE `SESSIONS`
-	ADD CONSTRAINT `PK_SESSIONS` -- 세션 기본키
+ALTER TABLE `sessions`
+	ADD CONSTRAINT `PK_sessions` -- 세션 기본키
 	PRIMARY KEY (
 	    `id` -- ID
 	);
@@ -211,12 +211,12 @@ ALTER TABLE `container_stats`
 	);
 
 -- 세션
-ALTER TABLE `SESSIONS`
-	ADD CONSTRAINT `FK_USERS_TO_SESSIONS` -- 사용자 -> 세션
+ALTER TABLE `sessions`
+	ADD CONSTRAINT `FK_users_TO_sessions` -- 사용자 -> 세션
 	FOREIGN KEY (
 	    `username` -- 사용자ID
 	)
-	REFERENCES `USERS` ( -- 사용자
+	REFERENCES `users` ( -- 사용자
 	    `username` -- 사용자ID
 	);
 

@@ -2,3 +2,5 @@
 **/log/
 #**/conf/
 **/certs/
+CLAUDE.md
+*.json
